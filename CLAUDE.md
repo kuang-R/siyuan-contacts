@@ -2,6 +2,11 @@
 
 本文件为 Claude Code (claude.ai/code) 在此仓库中工作时提供指导。
 
+## TODO
+
+1. **避免 `/` 菜单联系人过多** — 思源 `String.includes('')` 导致空输入匹配所有条目，无法在插件层面绕过。可能的方案：向思源提交 PR 修改过滤逻辑（空输入不匹配）；或思源支持 `minimumFilterLength` 配置；或改用原生 `@` 触发（需安全操作 Protyle 数据模型）
+2. **联系人页面包含引用视图** — 联系人详情中展示"谁引用了此联系人"（类似思源反链面板），利用 `/api/ref/getBackmentionDoc` 等 API
+
 ## 构建与开发
 
 ```bash
