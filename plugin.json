@@ -2,7 +2,7 @@
   "name": "siyuan-contacts",
   "author": "ruan",
   "url": "https://github.com/ruan/siyuan-contacts",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minAppVersion": "2.9.0",
   "backends": ["windows", "linux", "darwin", "docker"],
   "frontends": ["desktop", "desktop-window", "browser-desktop"],
@@ -12,9 +12,9 @@
     "default": "Contacts"
   },
   "description": {
-    "en_US": "Manage your contacts and friends. Type @name in any document to link to a contact.",
-    "zh_CN": "管理你的联系人和朋友信息。在文档中输入@名字即可跳转到通讯录对应页面。",
-    "default": "Manage your contacts and friends."
+    "en_US": "Contact management plugin. Add contacts with phone, email, birthday, groups and more. Type @name in the editor to insert a link to a contact, or use /add-contact slash command.",
+    "zh_CN": "通讯录管理插件。添加联系人（电话、邮箱、生日、分组等），在编辑器输入@名字自动插入联系人链接，支持 /add-contact 斜杠命令。",
+    "default": "Contact management plugin. Add contacts with phone, email, birthday, groups and more. Type @name in the editor to link to a contact."
   },
   "readme": {
     "en_US": "README.md",
@@ -25,6 +25,9 @@
     "address-book",
     "通讯录",
     "联系人",
-    "friends"
+    "friends",
+    "mention",
+    "autocomplete",
+    "addressbook"
   ]
 }

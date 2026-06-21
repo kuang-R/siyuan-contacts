@@ -1,283 +1,291 @@
 <script lang="ts">
-  /**
-   * ContactPanel — Root dock panel component for the Contacts plugin.
-   *
-   * This component is mounted into the SiYuan dock panel container.
-   * It orchestrates: toolbar, group filter, contact list, detail view, and forms.
-   */
-  import { onMount } from 'svelte';
-
-  // Stores
+  import { onMount, onDestroy } from 'svelte';
   import {
-    contacts,
-    isLoading,
-    error,
-    sortMode,
-    searchText,
-    selectedGroup,
-    filteredContacts,
-    allGroups,
-    loadAllContacts,
-    createContact,
-    updateContact,
-    deleteContact,
+    contacts, isLoading, error, sortMode, searchText, selectedGroup,
+    filteredContacts, allGroups, loadAllContacts,
+    createContact, updateContact, deleteContact,
   } from '../stores/contactStore';
-
   import {
-    panelView,
-    selectedContactId,
-    showDeleteConfirm,
-    isSaving,
-    viewContact,
-    backToList,
-    openAddForm,
-    openEditForm,
-    openDeleteConfirm,
-    cancelDelete,
+    panelView, selectedContactId, showDeleteConfirm, isSaving,
+    viewContact, backToList, openAddForm, openEditForm,
+    openDeleteConfirm, cancelDelete,
   } from '../stores/uiStore';
-
-  // Components
-  import ContactToolbar from './ContactToolbar.svelte';
-  import GroupFilter from './GroupFilter.svelte';
-  import ContactList from './ContactList.svelte';
-  import ContactDetail from './ContactDetail.svelte';
-  import ContactForm from './ContactForm.svelte';
-  import DeleteConfirmDialog from './DeleteConfirmDialog.svelte';
-  import LoadingSpinner from './LoadingSpinner.svelte';
-
-  import { ContactSortMode } from '../utils/constants';
+  import { ContactSortMode, MAX_AVATAR_SIZE } from '../utils/constants';
   import { t } from '../utils/i18n';
-  import type { ContactFormData } from '../models/contact';
-  // ========================================================================
-  // Props
-  // ========================================================================
+
   export let api: any;
   export let notebookId: string | null = null;
 
-  // ========================================================================
-  // Derived state
-  // ========================================================================
-  $: currentContact = $contacts.find((c) => c.id === $selectedContactId) ?? null;
-  $: isListView = $panelView === 'list';
-  $: hasSearch = $searchText.length > 0 || $selectedGroup !== '';
+  // ===== Local label strings — avoids calling t() in template =====
+  function L(key: string): string { return t(key); }
 
-  // ========================================================================
-  // Lifecycle
-  // ========================================================================
+  // ===== Local state mirrors stores =====
+  let _contacts: any[] = [], _loading = false, _error: string|null = null;
+  let _sort = ContactSortMode.NAME_ASC, _search = '', _group = '';
+  let _filtered: any[] = [], _groups: string[] = [];
+  let _view = 'list', _cid: string|null = null, _contact: any = null;
+  let _showDel = false, _saving = false, _isList = true, _hasSearch = false;
+
+  // Form fields
+  let fName = '', fPhone = '', fEmail = '', fBirthday = '', fAddr = '',
+    fOrg = '', fNotes = '', fGroups = '', fAvatar = '', fWeb = '', fWx = '', fQq = '';
+  let avatarPrev = '', avatarErr = '';
+
+  const unsubs: Array<()=>void> = [];
+
+  function doSub(s: any, fn: (v:any)=>void) { unsubs.push(s.subscribe(fn)); }
+
   onMount(() => {
+    doSub(contacts, v => { _contacts = v; _contact = _contacts.find(c => c.id === _cid) ?? null; });
+    doSub(isLoading, v => _loading = v);
+    doSub(error, v => _error = v);
+    doSub(sortMode, v => _sort = v);
+    doSub(searchText, v => { _search = v; _hasSearch = _search.length > 0 || _group !== ''; });
+    doSub(selectedGroup, v => { _group = v; _hasSearch = _search.length > 0 || _group !== ''; });
+    doSub(filteredContacts, v => _filtered = v);
+    doSub(allGroups, v => _groups = v);
+    doSub(panelView, v => { _view = v; _isList = v === 'list'; });
+    doSub(selectedContactId, v => { _cid = v; _contact = _contacts.find(c => c.id === _cid) ?? null; });
+    doSub(showDeleteConfirm, v => _showDel = v);
+    doSub(isSaving, v => _saving = v);
     loadAllContacts();
   });
 
-  // ========================================================================
-  // Toolbar handlers
-  // ========================================================================
-  function handleSearch(value: string): void {
-    searchText.set(value);
+  onDestroy(() => { unsubs.forEach(f => f()); });
+
+  function getBrief(c: any): string {
+    const parts = [c.phone, c.email, c.org].filter(Boolean).map(p => String(p).split(',')[0].trim());
+    return parts.slice(0,2).join(' · ') || ' ';
+  }
+  function getInitials(n: string): string {
+    if (!n||!n.trim()) return '?'; const tn = n.trim();
+    return /[一-鿿]/.test(tn) ? [...tn].filter(c=>/[一-鿿]/.test(c)).slice(0,2).join('') :
+      tn.split(/\s+/).filter(Boolean).map(p=>p[0].toUpperCase()).slice(0,2).join('');
   }
 
-  function handleSortChange(mode: ContactSortMode): void {
-    sortMode.set(mode);
+  function initForm(c: any) {
+    fName=c?.name||''; fPhone=c?.phone||''; fEmail=c?.email||''; fBirthday=c?.birthday||'';
+    fAddr=c?.address||''; fOrg=c?.org||''; fNotes=c?.notes||'';
+    fGroups=c?.groups?.join(', ')||''; fAvatar=c?.avatar||''; fWeb=c?.website||'';
+    fWx=c?.wechat||''; fQq=c?.qq||''; avatarPrev=c?.avatar||''; avatarErr='';
   }
+  $: if (_view === 'edit-form' && _contact) initForm(_contact);
+  $: if (_view === 'add-form' && !_contact) initForm(null);
 
-  function handleAdd(): void {
-    openAddForm();
-  }
+  function goAdd() { openAddForm(); }
+  function goBack() { backToList(); }
+  function goEdit() { if (_cid) openEditForm(_cid); }
+  function goDel() { openDeleteConfirm(); }
+  function cancelDel() { cancelDelete(); }
 
-  // ========================================================================
-  // Group filter
-  // ========================================================================
-  function handleGroupSelect(group: string): void {
-    selectedGroup.set(group);
-  }
-
-  // ========================================================================
-  // Contact list
-  // ========================================================================
-  function handleContactClick(id: string): void {
-    viewContact(id);
-  }
-
-  // ========================================================================
-  // Detail view
-  // ========================================================================
-  function handleEdit(): void {
-    if ($selectedContactId) {
-      openEditForm($selectedContactId);
-    }
-  }
-
-  function handleDeleteClick(): void {
-    openDeleteConfirm();
-  }
-
-  function handleBack(): void {
-    backToList();
-  }
-
-  // ========================================================================
-  // Form handlers
-  // ========================================================================
-  async function handleSaveForm(data: ContactFormData): Promise<void> {
+  function saveForm() {
+    if (!fName.trim()) return;
     isSaving.set(true);
-    try {
-      if ($panelView === 'edit-form' && $selectedContactId) {
-        await updateContact($selectedContactId, data);
-        viewContact($selectedContactId); // Go back to detail view
-      } else {
-        await createContact(data);
-        backToList(); // Go back to list
-      }
-    } catch (err) {
-      console.error('[siyuan-contacts] Save failed:', err);
-    } finally {
-      isSaving.set(false);
-    }
+    const data = { name:fName, phone:fPhone, email:fEmail, birthday:fBirthday,
+      address:fAddr, org:fOrg, notes:fNotes, groups:fGroups, avatar:fAvatar,
+      website:fWeb, wechat:fWx, qq:fQq };
+    (_view === 'edit-form' && _cid
+      ? updateContact(_cid, data).then(() => viewContact(_cid!))
+      : createContact(data).then(() => backToList())
+    ).catch(e => console.error(e)).finally(() => isSaving.set(false));
   }
+  function cancelForm() { _view === 'edit-form' && _cid ? viewContact(_cid) : backToList(); }
 
-  function handleCancelForm(): void {
-    if ($panelView === 'edit-form' && $selectedContactId) {
-      viewContact($selectedContactId); // Go back to detail
-    } else {
-      backToList();
-    }
-  }
-
-  // ========================================================================
-  // Delete handler
-  // ========================================================================
-  async function handleConfirmDelete(): Promise<void> {
-    if (!$selectedContactId) return;
+  function doDelete() {
+    if (!_cid) return;
     isSaving.set(true);
-    try {
-      await deleteContact($selectedContactId);
-      backToList();
-    } catch (err) {
-      console.error('[siyuan-contacts] Delete failed:', err);
-    } finally {
-      isSaving.set(false);
-    }
+    deleteContact(_cid).then(() => backToList())
+      .catch(e => console.error(e)).finally(() => isSaving.set(false));
   }
 
-  function handleCancelDelete(): void {
-    cancelDelete();
+  function openSiYuan(id: string) {
+    try { window.siyuan?.ws?.send({ type:'openTab', data:{ doc:{ id } } }); } catch {}
   }
 
-  // ========================================================================
-  // Navigate to contact in SiYuan
-  // ========================================================================
-  function openInSiYuan(id: string): void {
-    // Use SiYuan's openTab to open the contact document
-    try {
-      window.siyuan?.ws?.send({
-        type: 'openTab',
-        data: { doc: { id } },
-      });
-    } catch {
-      // Fallback: try opening via URL scheme
-      console.log('Navigate to:', `siyuan://blocks/${id}`);
-    }
+  function onAvatarFile(e: Event) {
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f) return;
+    avatarErr = '';
+    if (f.size > MAX_AVATAR_SIZE) { avatarErr = 'Too large'; return; }
+    const r = new FileReader();
+    r.onload = () => { avatarPrev = r.result as string; fAvatar = r.result as string; };
+    r.readAsDataURL(f);
   }
 </script>
 
-<div class="contacts-root">
-  {#if $isLoading && $contacts.length === 0}
-    <LoadingSpinner text={t('loading')} />
-  {:else if $error && $contacts.length === 0}
-    <div class="error-state">
-      <p>{t('errorLoading')}</p>
-      <p class="error-detail">{$error}</p>
-      <button on:click={() => loadAllContacts()}>Retry</button>
+<div class="root">
+  {#if _loading && _contacts.length === 0}
+    <div class="center">{L('loading')}</div>
+  {:else if _error && _contacts.length === 0}
+    <div class="center">{L('errorLoading')}: {_error}</div>
+  {:else if _isList}
+    <!-- LIST -->
+    <div class="toolbar">
+      <input type="text" class="s-in" placeholder={L('searchPlaceholder')} value={_search}
+        on:input={e => searchText.set(e.target.value)} />
+      <select class="s-sel" value={_sort} on:change={e => sortMode.set(e.target.value)}>
+        <option value={ContactSortMode.NAME_ASC}>A-Z</option>
+        <option value={ContactSortMode.NAME_DESC}>Z-A</option>
+        <option value={ContactSortMode.CREATED_DESC}>New</option>
+        <option value={ContactSortMode.UPDATED_DESC}>Recent</option>
+      </select>
+      <button type="button" class="btn-add" on:click={goAdd}>+</button>
     </div>
-  {:else}
-    <!-- List View -->
-    {#if isListView}
-      <ContactToolbar
-        searchValue={$searchText}
-        sortMode={$sortMode}
-        onSearch={handleSearch}
-        onSortChange={handleSortChange}
-        onAdd={handleAdd}
-      />
-      <GroupFilter
-        groups={$allGroups}
-        selected={$selectedGroup}
-        onSelect={handleGroupSelect}
-        allLabel={t('allGroups')}
-      />
-      <ContactList
-        contacts={$filteredContacts}
-        onClick={handleContactClick}
-        hasSearch={hasSearch}
-      />
-    {:else if $panelView === 'detail' && currentContact}
-      <!-- Detail View -->
-      <ContactDetail
-        contact={currentContact}
-        onBack={handleBack}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-        onOpenInSiYuan={(id) => openInSiYuan(id)}
-      />
-    {:else if $panelView === 'add-form'}
-      <!-- Add Form -->
-      <ContactForm
-        onSave={handleSaveForm}
-        onCancel={handleCancelForm}
-        isSaving={$isSaving}
-      />
-    {:else if $panelView === 'edit-form' && currentContact}
-      <!-- Edit Form -->
-      <ContactForm
-        initialData={currentContact}
-        onSave={handleSaveForm}
-        onCancel={handleCancelForm}
-        isSaving={$isSaving}
-      />
+    {#if _groups.length > 0}
+      <div class="g-bar">
+        <span class="g-tag" class:active={_group===''} on:click={()=>selectedGroup.set('')}>{L('allGroups')}</span>
+        {#each _groups as g}
+          <span class="g-tag" class:active={_group===g}
+            on:click={()=>selectedGroup.set(_group===g?'':g)}>{g}</span>
+        {/each}
+      </div>
     {/if}
+    <div class="c-list">
+      {#each _filtered as c (c.id)}
+        <div class="c-item" on:click={()=>viewContact(c.id)}>
+          <div class="av-sm">{getInitials(c.name)}</div>
+          <div class="c-info">
+            <div class="c-name">{c.name}</div>
+            <div class="c-brief">{getBrief(c)}</div>
+            {#if c.groups.length > 0}
+              <div class="c-tags">{#each c.groups.slice(0,3) as g}<span class="c-tag">{g}</span>{/each}</div>
+            {/if}
+          </div>
+        </div>
+      {/each}
+      {#if _filtered.length === 0}
+        <div class="center">{L('noContacts')}</div>
+      {/if}
+    </div>
+
+  {:else if _view === 'detail' && _contact}
+    <!-- DETAIL -->
+    <div class="d-head">
+      <button class="d-back" on:click={goBack}>{L('back')}</button>
+      <span class="d-title">{_contact.name}</span>
+      <button class="d-ed" on:click={goEdit}>{L('edit')}</button>
+      <button class="d-del" on:click={goDel}>{L('delete')}</button>
+    </div>
+    <div class="d-body">
+      <div class="d-av-row"><div class="av-lg">{getInitials(_contact.name)}</div></div>
+      <div class="d-row"><span class="d-l">{L('name')}</span><span class="d-v b">{_contact.name}</span></div>
+      {#if _contact.phone}<div class="d-row"><span class="d-l">{L('phone')}</span><span class="d-v">{_contact.phone}</span></div>{/if}
+      {#if _contact.email}<div class="d-row"><span class="d-l">{L('email')}</span><span class="d-v">{_contact.email}</span></div>{/if}
+      {#if _contact.birthday}<div class="d-row"><span class="d-l">{L('birthday')}</span><span class="d-v">{_contact.birthday}</span></div>{/if}
+      {#if _contact.address}<div class="d-row"><span class="d-l">{L('address')}</span><span class="d-v">{_contact.address}</span></div>{/if}
+      {#if _contact.org}<div class="d-row"><span class="d-l">{L('org')}</span><span class="d-v">{_contact.org}</span></div>{/if}
+      {#if _contact.website}<div class="d-row"><span class="d-l">{L('website')}</span><span class="d-v">{_contact.website}</span></div>{/if}
+      {#if _contact.wechat}<div class="d-row"><span class="d-l">{L('wechat')}</span><span class="d-v">{_contact.wechat}</span></div>{/if}
+      {#if _contact.qq}<div class="d-row"><span class="d-l">{L('qq')}</span><span class="d-v">{_contact.qq}</span></div>{/if}
+      {#if _contact.notes}<div class="d-row"><span class="d-l">{L('notes')}</span><span class="d-v">{_contact.notes}</span></div>{/if}
+      {#if _contact.groups.length > 0}<div class="d-row"><span class="d-l">{L('groups')}</span><span class="d-v d-gs">{#each _contact.groups as g}<span class="d-gt">{g}</span>{/each}</span></div>{/if}
+      {#if _contact.created}<div class="d-row"><span class="d-l">{L('created')}</span><span class="d-v meta">{_contact.created.slice(0,10)}</span></div>{/if}
+      {#if _contact.updated}<div class="d-row"><span class="d-l">{L('updated')}</span><span class="d-v meta">{_contact.updated.slice(0,10)}</span></div>{/if}
+    </div>
+
+  {:else if _view === 'add-form' || _view === 'edit-form'}
+    <!-- FORM -->
+    <div class="f-head">
+      <span class="f-title">{_view==='add-form'?L('addContact'):L('editContact')}</span>
+      <button class="f-cancel" on:click={cancelForm} disabled={_saving}>{L('cancel')}</button>
+    </div>
+    <div class="f-body">
+      <div class="fg"><label class="fl">{L('avatar')}</label>
+        <div class="av-up">
+          <label class="av-lab" class:has-img={!!avatarPrev}>
+            {#if avatarPrev}<img src={avatarPrev} alt="" />{:else}+{/if}
+            <input type="file" accept="image/*" on:change={onAvatarFile} class="f-hidden" />
+          </label>
+          {#if avatarPrev}<button class="av-rm" on:click={()=>{avatarPrev='';fAvatar='';}}>x</button>{/if}
+        </div>
+        {#if avatarErr}<p class="f-err">{avatarErr}</p>{/if}
+      </div>
+      <div class="fg"><label class="fl">{L('name')} *</label><input type="text" class="fi" bind:value={fName} /></div>
+      <div class="fg"><label class="fl">{L('phone')}</label><input type="text" class="fi" bind:value={fPhone} /></div>
+      <div class="fg"><label class="fl">{L('email')}</label><input type="email" class="fi" bind:value={fEmail} /></div>
+      <div class="fg"><label class="fl">{L('birthday')}</label><input type="date" class="fi" bind:value={fBirthday} /></div>
+      <div class="fg"><label class="fl">{L('org')}</label><input type="text" class="fi" bind:value={fOrg} /></div>
+      <div class="fg"><label class="fl">{L('address')}</label><input type="text" class="fi" bind:value={fAddr} /></div>
+      <div class="fg"><label class="fl">{L('groups')}</label><input type="text" class="fi" bind:value={fGroups} placeholder={L('groupsHint')} /></div>
+      <div class="fg"><label class="fl">{L('website')}</label><input type="url" class="fi" bind:value={fWeb} /></div>
+      <div class="fg"><label class="fl">{L('wechat')}</label><input type="text" class="fi" bind:value={fWx} /></div>
+      <div class="fg"><label class="fl">{L('qq')}</label><input type="text" class="fi" bind:value={fQq} /></div>
+      <div class="fg"><label class="fl">{L('notes')}</label><textarea class="fi f-ta" bind:value={fNotes} rows={3}></textarea></div>
+    </div>
+    <div class="f-act">
+      <button class="f-save" on:click={saveForm} disabled={!fName.trim()||_saving}>
+        {_saving?L('loading'):L('save')}</button>
+    </div>
   {/if}
 </div>
 
-<!-- Delete Confirmation Dialog (overlays the entire dock) -->
-{#if $showDeleteConfirm && currentContact}
-  <DeleteConfirmDialog
-    contactName={currentContact.name}
-    onConfirm={handleConfirmDelete}
-    onCancel={handleCancelDelete}
-  />
+{#if _showDel && _contact}
+  <div class="del-overlay" on:click|self={cancelDel}>
+    <div class="del-box">
+      <p>{L('confirmDelete')} "{_contact.name}"?</p>
+      <div class="del-btns">
+        <button on:click={cancelDel}>{L('cancel')}</button>
+        <button class="del-ok" on:click={doDelete}>{L('delete')}</button>
+      </div>
+    </div>
+  </div>
 {/if}
 
 <style>
-  .contacts-root {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-  }
-  .error-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 20px;
-    text-align: center;
-    color: var(--contacts-text-secondary, #666666);
-    gap: 8px;
-  }
-  .error-detail {
-    font-size: 12px;
-    opacity: 0.7;
-    max-width: 100%;
-    word-break: break-all;
-  }
-  .error-state button {
-    margin-top: 4px;
-    padding: 6px 16px;
-    border: 1px solid var(--contacts-border, #e0e0e0);
-    border-radius: 6px;
-    background: var(--contacts-bg, #ffffff);
-    color: var(--contacts-primary, #3575f0);
-    cursor: pointer;
-    font-size: 13px;
-  }
+  .root{display:flex;flex-direction:column;height:100%;overflow:hidden;font-size:13px;}
+  .center{display:flex;align-items:center;justify-content:center;height:100%;color:#888;}
+  .toolbar{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid #e0e0e0;background:#f5f5f5;flex-shrink:0;}
+  .s-in{flex:1;min-width:0;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;outline:none;}
+  .s-sel{padding:6px 4px;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;max-width:90px;}
+  .btn-add{width:28px;height:28px;border:none;border-radius:6px;background:#3575f0;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;}
+  .g-bar{display:flex;gap:6px;padding:6px 10px;overflow-x:auto;border-bottom:1px solid #eee;flex-shrink:0;}
+  .g-tag{padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap;cursor:pointer;border:1px solid #ddd;}
+  .g-tag.active{background:#3575f0;color:#fff;border-color:#3575f0;}
+  .c-list{flex:1;overflow-y:auto;}
+  .c-item{display:flex;align-items:center;gap:10px;padding:10px;cursor:pointer;border-bottom:1px solid #eee;}
+  .c-item:hover{background:rgba(0,0,0,.02);}
+  .av-sm{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#3575f0;color:#fff;font-weight:600;font-size:14px;flex-shrink:0;}
+  .av-lg{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#3575f0;color:#fff;font-weight:600;font-size:28px;}
+  .c-info{flex:1;min-width:0;}
+  .c-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .c-brief{font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
+  .c-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;}
+  .c-tag{font-size:10px;padding:1px 6px;border-radius:8px;background:#e8f0fe;color:#3575f0;}
+  .d-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #e0e0e0;background:#f5f5f5;flex-shrink:0;}
+  .d-back,.d-ed,.d-del{padding:3px 10px;border:1px solid #ddd;border-radius:4px;cursor:pointer;font-size:12px;background:#fff;}
+  .d-del:hover{background:#fce8e8;border-color:#e74c3c;color:#e74c3c;}
+  .d-title{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .d-body{flex:1;overflow-y:auto;padding:16px;}
+  .d-av-row{display:flex;justify-content:center;margin-bottom:16px;}
+  .d-row{display:flex;padding:6px 0;border-bottom:1px solid #f0f0f0;}
+  .d-l{width:60px;flex-shrink:0;font-size:11px;color:#999;}
+  .d-v{flex:1;word-break:break-all;}
+  .d-v.b{font-weight:600;}
+  .d-v.meta{font-size:11px;color:#bbb;}
+  .d-gs{display:flex;gap:4px;flex-wrap:wrap;}
+  .d-gt{font-size:11px;padding:1px 8px;border-radius:10px;background:#e8f0fe;color:#3575f0;}
+  .f-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #e0e0e0;background:#f5f5f5;flex-shrink:0;}
+  .f-title{flex:1;font-weight:600;}
+  .f-cancel{padding:3px 10px;border:1px solid #ddd;border-radius:4px;cursor:pointer;font-size:12px;background:#fff;}
+  .f-body{flex:1;overflow-y:auto;padding:12px;}
+  .fg{margin-bottom:12px;}
+  .fl{display:block;font-size:11px;color:#999;margin-bottom:3px;}
+  .fi{width:100%;padding:7px 8px;border:1px solid #ddd;border-radius:5px;font-size:13px;outline:none;box-sizing:border-box;}
+  .fi:focus{border-color:#3575f0;}
+  .f-ta{resize:vertical;min-height:50px;}
+  .f-err{font-size:11px;color:#e74c3c;margin-top:2px;}
+  .f-act{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #e0e0e0;flex-shrink:0;}
+  .f-save{flex:1;padding:10px;border:none;border-radius:6px;background:#3575f0;color:#fff;font-size:14px;font-weight:500;cursor:pointer;}
+  .f-save:disabled{opacity:.5;cursor:not-allowed;}
+  .av-up{display:flex;align-items:center;gap:8px;}
+  .av-lab{display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;border:2px dashed #ddd;cursor:pointer;font-size:20px;color:#ccc;overflow:hidden;}
+  .av-lab.has-img{border-style:solid;border-color:#3575f0;}
+  .av-lab img{width:100%;height:100%;object-fit:cover;}
+  .av-rm{width:20px;height:20px;border:none;border-radius:50%;background:#e74c3c;color:#fff;cursor:pointer;font-size:10px;}
+  .f-hidden{display:none;}
+  .del-overlay{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;}
+  .del-box{background:#fff;border-radius:8px;padding:20px;max-width:260px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+  .del-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+  .del-btns button{padding:6px 14px;border:1px solid #ddd;border-radius:4px;cursor:pointer;font-size:13px;background:#fff;}
+  .del-ok{background:#e74c3c!important;color:#fff;border-color:#e74c3c!important;}
 </style>

@@ -11,13 +11,18 @@ export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, 'src/index.ts'),
-      formats: ['cjs'],
+      formats: ['iife'],
+      name: 'siyuanContacts',
       fileName: () => 'index.js',
     },
     outDir: 'dist',
     minify: 'esbuild',
     rollupOptions: {
       external: ['siyuan'],
+      output: {
+        globals: { siyuan: 'siyuan' },
+        footer: 'module.exports = siyuanContacts;',
+      },
     },
   },
   resolve: {
