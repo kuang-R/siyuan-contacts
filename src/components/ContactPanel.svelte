@@ -197,7 +197,13 @@
     <div class="c-list">
       {#each _filtered as c (c.id)}
         <div class="c-item" on:click={()=>viewContact(c.id)}>
-          <div class="av-sm">{getInitials(c.name)}</div>
+          <div class="av-sm">
+            {#if c.avatar}
+              <img src={c.avatar} alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+            {:else}
+              {getInitials(c.name)}
+            {/if}
+          </div>
           <div class="c-info">
             <div class="c-name">{c.name}</div>
             <div class="c-brief">{getBrief(c)}</div>
@@ -221,7 +227,15 @@
       <button class="d-del" on:click={goDel}>{L('delete')}</button>
     </div>
     <div class="d-body">
-      <div class="d-av-row"><div class="av-lg">{getInitials(_contact.name)}</div></div>
+      <div class="d-av-row">
+        <div class="av-lg">
+          {#if _contact.avatar}
+            <img src={_contact.avatar} alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+          {:else}
+            {getInitials(_contact.name)}
+          {/if}
+        </div>
+      </div>
       <div class="d-row"><span class="d-l">{L('name')}</span><span class="d-v b">{_contact.name}</span></div>
       {#if _contact.phone}
         <div class="d-row"><span class="d-l">{L('phone')}</span>
