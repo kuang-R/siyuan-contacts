@@ -182,6 +182,16 @@ export class ContactsApi {
   // ==========================================================================
 
   /**
+   * Delete a block by ID.
+   */
+  async deleteBlock(id: string): Promise<void> {
+    const res = await this.client.deleteBlock({ id });
+    if (res?.code !== 0) {
+      throw new Error(`Failed to delete block: ${res?.msg ?? 'unknown error'}`);
+    }
+  }
+
+  /**
    * Update a block's content (e.g., to rename a document title).
    */
   async updateBlock(id: string, dataType: string, data: string): Promise<void> {

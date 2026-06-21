@@ -103,8 +103,6 @@ export function buildAttrsFromForm(data: ContactFormData): AttrRecord {
   attrs[ATTR_KEYS.qq] = data.qq;
   attrs[ATTR_KEYS.created] = now;
   attrs[ATTR_KEYS.updated] = now;
-  // Prevent direct editing of contact documents in the file tree
-  attrs['custom-sy-readonly'] = 'true';
 
   // Remove empty strings (don't store empty attributes)
   for (const key of Object.keys(attrs)) {
@@ -140,8 +138,6 @@ export function buildUpdateAttrsFromForm(data: ContactFormData): AttrRecord {
   attrs[ATTR_KEYS.wechat] = data.wechat;
   attrs[ATTR_KEYS.qq] = data.qq;
   attrs[ATTR_KEYS.updated] = now;
-  // Prevent direct editing of contact documents in the file tree
-  attrs['custom-sy-readonly'] = 'true';
   // Note: 'created' is intentionally NOT included — it should never be overwritten
 
   return attrs;

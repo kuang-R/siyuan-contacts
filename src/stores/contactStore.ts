@@ -214,23 +214,27 @@ export async function updateContact(id: string, data: ContactFormData): Promise<
 export async function deleteContact(id: string): Promise<void> {
   if (!api || !notebookId) throw new Error('Contact store not initialized');
 
-  // Get the contact to determine its path for removal
   const contact = get(contacts).find((c) => c.id === id);
   if (!contact) throw new Error('Contact not found');
 
-  // We need the document path. Try to infer from the contact name.
-  // Because SiYuan paths are based on the document title, use the contact name.
-  const path = getContactPath(contact.name);
+  // Get the actual file path from the database (not hpath from name)
+  const rows = await api.sqlQuery(
+    `SELECT path FROM blocks WHERE id = '${id.replace(/'/g, "''")}'`
+  );
+  const filePath = rows[0]?.path || getContactPath(contact.name);
+
+  // Remove file via file tree API
   try {
-    await api.removeDoc(notebookId, path);
+    await api.removeDoc(notebookId, filePath);
   } catch (err) {
-    // If path-based removal fails, the user may have renamed the document
-    // independently. Fall back to a more aggressive search.
-    console.warn('[siyuan-contacts] Path-based removal failed, contact may have been moved:', err);
-    throw err;
+    console.warn('[siyuan-contacts] removeDoc failed (may already be deleted):', err);
   }
 
-  await loadAllContacts();
+  // Remove database block
+  try { await api.deleteBlock(id); } catch { /* best-effort */ }
+
+  // Remove locally immediately
+  contacts.update(list => list.filter(c => c.id !== id));
 }
 
 /**
