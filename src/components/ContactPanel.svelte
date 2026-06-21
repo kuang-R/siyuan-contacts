@@ -15,6 +15,8 @@
 
   export let api: any;
   export let notebookId: string | null = null;
+  export let showFab = true;
+  export let onToggleFab: () => void = () => {};
 
   function L(key: string): string { return t(key); }
 
@@ -129,6 +131,14 @@
     setTimeout(() => copiedNum = '', 2000);
   }
 
+  let fabToast = '';
+  function handleToggleFab() {
+    const wasVisible = showFab;
+    onToggleFab();
+    fabToast = wasVisible ? L('fabHidden') : L('fabShown');
+    setTimeout(() => fabToast = '', 2000);
+  }
+
   function onAvatarFile(e: Event) {
     const f = (e.target as HTMLInputElement).files?.[0];
     if (!f) return;
@@ -156,6 +166,20 @@
         <option value={ContactSortMode.CREATED_DESC}>{L('sortByCreated')}</option>
         <option value={ContactSortMode.UPDATED_DESC}>{L('sortByUpdated')}</option>
       </select>
+      <button type="button" class="btn-fab" on:click={handleToggleFab} title={L('settingShowFab')}>
+        {#if showFab}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+            <circle cx="8" cy="8" r="6" opacity="0.85"/>
+            <circle cx="8" cy="8" r="3.5" fill="white"/>
+            <circle cx="8" cy="8" r="1.5" opacity="0.85"/>
+          </svg>
+        {:else}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" opacity="0.4">
+            <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="8" cy="8" r="1.5"/>
+          </svg>
+        {/if}
+      </button>
       <button type="button" class="btn-add" on:click={goAdd}>+</button>
     </div>
     {#if _groups.length > 0}
@@ -166,6 +190,9 @@
             on:click={()=>selectedGroup.set(_group===g?'':g)}>{g}</span>
         {/each}
       </div>
+    {/if}
+    {#if fabToast}
+      <div class="toast" style="bottom:120px">{fabToast}</div>
     {/if}
     <div class="c-list">
       {#each _filtered as c (c.id)}
@@ -301,6 +328,8 @@
   .s-in{flex:1;min-width:0;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;outline:none;}
   .s-sel{padding:6px 4px;border:1px solid #ddd;border-radius:6px;font-size:12px;cursor:pointer;max-width:90px;}
   .btn-add{width:28px;height:28px;border:none;border-radius:6px;background:#3575f0;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;}
+  .btn-fab{width:28px;height:28px;border:none;border-radius:6px;background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;color:#888;}
+  .btn-fab:hover{background:#e8e8e8;color:#333;}
   .g-bar{display:flex;gap:6px;padding:6px 10px;overflow-x:auto;border-bottom:1px solid #eee;flex-shrink:0;}
   .g-tag{padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap;cursor:pointer;border:1px solid #ddd;}
   .g-tag.active{background:#3575f0;color:#fff;border-color:#3575f0;}

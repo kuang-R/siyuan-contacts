@@ -12,9 +12,9 @@
     "default": "Contacts"
   },
   "description": {
-    "en_US": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Type /name to insert a contact link, /add-contact to quick-add. Top bar button for one-click access. Click phone numbers to copy. Full i18n (zh_CN/en_US).",
-    "zh_CN": "通讯录插件。多号码、多邮箱、分组标签、排序筛选。输入/名字插入联系人链接，/add-contact 快速添加。右上角插件栏一键打开。点击号码复制。完整中英文国际化。",
-    "default": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Type /name to insert contact link, /add-contact to quick-add. Top bar button for one-click access."
+    "en_US": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Type /name to insert a contact link, /add-contact to quick-add. Top bar button + optional floating button for quick access. FAB can be toggled from panel. Click phone numbers to copy. Full i18n (zh_CN/en_US).",
+    "zh_CN": "通讯录插件。多号码、多邮箱、分组标签、排序筛选。输入/名字插入联系人链接，/add-contact 快速添加。顶部栏 + 可切换的浮动按钮，一键打开。面板内开关控制浮动按钮显隐。点击号码复制。完整中英文国际化。",
+    "default": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Type /name to insert contact link, /add-contact to quick-add. Top bar button + toggleable FAB for quick access."
   },
   "readme": {
     "en_US": "README.md",

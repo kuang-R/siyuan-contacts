@@ -46,5 +46,9 @@
   "avatarTooLarge": "文件过大",
   "viewContactDetails": "查看联系人详情",
   "refreshContacts": "刷新联系人",
-  "addContactSlashLabel": "添加联系人到通讯录"
+  "addContactSlashLabel": "添加联系人到通讯录",
+  "settingShowFab": "显示右下角浮动按钮",
+  "settingShowFabDesc": "关闭后可通过右上角插件图标或快捷键打开通讯录",
+  "fabShown": "浮动按钮已显示",
+  "fabHidden": "浮动按钮已隐藏"
 }

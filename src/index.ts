@@ -42,6 +42,11 @@ export default class ContactsPlugin extends Plugin {
     const lang = window?.siyuan?.config?.lang ?? 'zh_CN';
     setLang(lang);
 
+    // Init persisted settings (defaults)
+    if (this.data.showFab === undefined) {
+      this.data.showFab = true;
+    }
+
     this.api = new ContactsApi();
     try {
       this.notebookId = await ensureContactsNotebook(this.api);
@@ -76,7 +81,9 @@ export default class ContactsPlugin extends Plugin {
   private injectUI(): void {
     this.createBackdrop();
     this.createPanel();
-    this.createFAB();
+    if (this.data.showFab) {
+      this.createFAB();
+    }
   }
 
   private createBackdrop(): void {
@@ -109,7 +116,12 @@ export default class ContactsPlugin extends Plugin {
 
     this.panelComponent = new ContactPanel({
       target: el,
-      props: { api: this.api, notebookId: this.notebookId },
+      props: {
+        api: this.api,
+        notebookId: this.notebookId,
+        showFab: this.data.showFab,
+        onToggleFab: () => this.toggleFab(),
+      },
     });
   }
 
@@ -133,7 +145,7 @@ export default class ContactsPlugin extends Plugin {
       transition: transform 0.2s, opacity 0.2s;
       border: none; outline: none;
     `;
-    fab.title = '通讯录';
+    fab.title = L('pluginName');
     fab.addEventListener('click', () => this.togglePanel());
     document.body.appendChild(fab);
     this.fabBtn = fab;
@@ -151,24 +163,45 @@ export default class ContactsPlugin extends Plugin {
     }
   }
 
+  private removeFAB(): void {
+    if (this.fabBtn) { this.fabBtn.remove(); this.fabBtn = null; }
+  }
+
   private openPanel(): void {
-    if (!this.panelEl || !this.backdropEl || !this.fabBtn) return;
+    if (!this.panelEl || !this.backdropEl) return;
     this.panelEl.style.transform = 'translateX(0)';
     this.backdropEl.style.opacity = '1';
     this.backdropEl.style.pointerEvents = 'auto';
-    this.fabBtn.style.opacity = '0.3';
+    if (this.fabBtn) this.fabBtn.style.opacity = '0.3';
   }
 
   private closePanel(): void {
-    if (!this.panelEl || !this.backdropEl || !this.fabBtn) return;
+    if (!this.panelEl || !this.backdropEl) return;
     this.panelEl.style.transform = 'translateX(100%)';
     this.backdropEl.style.opacity = '0';
     this.backdropEl.style.pointerEvents = 'none';
-    this.fabBtn.style.opacity = '1';
+    if (this.fabBtn) this.fabBtn.style.opacity = '1';
   }
 
   private isPanelOpen(): boolean {
     return this.panelEl?.style.transform === 'translateX(0px)';
+  }
+
+  // ========================================================================
+  // FAB toggle
+  // ========================================================================
+
+  private toggleFab(): void {
+    this.data.showFab = !this.data.showFab;
+    if (this.data.showFab) {
+      if (!this.fabBtn) this.createFAB();
+    } else {
+      this.removeFAB();
+    }
+    // Sync the Svelte component's showFab prop
+    if (this.panelComponent) {
+      this.panelComponent.$set({ showFab: this.data.showFab });
+    }
   }
 
   // ========================================================================

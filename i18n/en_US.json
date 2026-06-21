@@ -46,5 +46,9 @@
   "avatarTooLarge": "File too large",
   "viewContactDetails": "View Contact Details",
   "refreshContacts": "Refresh Contacts",
-  "addContactSlashLabel": "Add Contact to Address Book"
+  "addContactSlashLabel": "Add Contact to Address Book",
+  "settingShowFab": "Show floating button",
+  "settingShowFabDesc": "When disabled, use the top bar icon or keyboard shortcut to open contacts",
+  "fabShown": "Floating button shown",
+  "fabHidden": "Floating button hidden"
 }

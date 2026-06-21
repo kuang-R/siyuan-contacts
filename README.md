@@ -5,6 +5,7 @@ A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plug
 ## Features
 
 - **Slide-out Panel** — Click the floating button (bottom-right) or the top bar icon to open the contacts panel
+- **Toggleable FAB** — Show or hide the floating button from the panel toolbar (● visible / ○ hidden), with toast confirmation
 - **Rich Contact Fields** — Name, multiple phone numbers, multiple emails, birthday, address, organization, groups, avatar, website, WeChat, QQ, and notes
 - **Multi-Value Fields** — Add/remove phone numbers and email addresses individually with +/− buttons
 - **Group Tags** — Organize contacts with custom tags and filter by them
@@ -33,6 +34,7 @@ Search for "siyuan-contacts" in the SiYuan marketplace.
 
 - Click the **blue floating button** (bottom-right corner) to slide out the contacts panel
 - Or click the **contacts icon** in the top bar (right side of the SiYuan toolbar)
+- The FAB can be toggled on/off from the panel toolbar (● icon next to the + button)
 - Click the backdrop or press Escape to close
 
 ### Adding a Contact

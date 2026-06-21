@@ -55,13 +55,23 @@ if (!Plugin) throw new Error('...');
 - `siyuan` 全局对象没有 `.Plugin`，只有通过 `require('siyuan')` 才能拿到
 - 加 `throw` 做明确报错，不用静默降级
 
-### UI：DOM 注入（浮动按钮 + 侧滑面板）
+### UI：DOM 注入（浮动按钮 + 顶部栏 + 侧滑面板）
 
 不使用 SiYuan 的 Dock/Tab API（浏览器模式下不可靠）。直接注入 DOM：
 
-- `index.ts` 创建三个 DOM 元素：`#siyuan-contacts-backdrop`（遮罩）、`#siyuan-contacts-panel`（面板）、`#siyuan-contacts-fab`（浮动按钮）
+- `index.ts` 创建 `#siyuan-contacts-backdrop`（遮罩）、`#siyuan-contacts-panel`（面板）、`#siyuan-contacts-fab`（浮动按钮，可选）
+- 通过 `this.addTopBar()` 在顶部栏注册图标按钮，左键打开面板
 - Svelte 组件渲染到 `#siyuan-contacts-panel` 中
-- 点击 FAB toggle 面板，点击遮罩关闭
+- 点击 FAB 或顶部栏图标打开面板，点击遮罩关闭
+- 面板未打开时 FAB 为 `null`，`openPanel`/`closePanel` 需判空（`if (this.fabBtn)`）
+
+### 插件配置（无 Setting 页面）
+
+思源顶部栏右键菜单不支持插件自定义菜单项（内核硬编码只放"取消盯住"）。配置项直接放在面板 UI 中：
+
+- **FAB 显隐开关**：面板工具栏 ●/○ 按钮，状态存储在 `plugin.data.showFab`（默认 `true`）
+- `toggleFab()` 创建/销毁 FAB，通过 `this.panelComponent.$set({ showFab })` 同步到 Svelte 组件
+- 插件数据用 `this.data` 持久化，SiYuan 自动 JSON 序列化
 
 ### Svelte：单文件组件 + 手动订阅
 
@@ -99,13 +109,13 @@ if (!Plugin) throw new Error('...');
 
 ```
 src/
-  index.ts              # 插件入口：DOM 注入、FAB、面板开关
+  index.ts              # 插件入口：DOM 注入、FAB、顶部栏、面板开关、配置管理
   index.css             # 全局样式
   utils/                # API、SQL、i18n、notebook、avatar
   models/               # Contact 接口、IAL 解析
   stores/               # Svelte stores（contactStore、uiStore）
   components/
-    ContactPanel.svelte # 唯一 UI 组件（列表/详情/表单/对话框）
+    ContactPanel.svelte # 唯一 UI 组件（列表/详情/表单/对话框/FAB开关）
   editor/               # mentionPlugin（/名字 斜杠链接）、slashCommand、linkPlugin
 tests/                  # IAL 解析、工具函数测试
 ```
@@ -119,3 +129,5 @@ tests/                  # IAL 解析、工具函数测试
 - 语言检测：`window.siyuan.config.lang`，默认 `zh_CN`
 - i18n 统一用 `L('key')`：`i18n.ts` 导出 `export const L = t` 别名，非 Svelte 文件直接 `import { L }`；Svelte 组件内定义局部 `function L(key) { return t(key); }`（避免 Rollup IIFE 改名）
 - Store 导航注意：`selectedContactId.set(id)` 当值相同时 Svelte store 不触发订阅者。`viewContact` 先 `set(null)` 再 `set(id)` 强制刷新
+- 插件→Svelte 通信：通过 props 传递数据和回调（`showFab`/`onToggleFab`），运行时更新用 `this.panelComponent.$set({ key: value })`
+- 思源顶部栏右键菜单不支持插件自定义项（内核只放"取消盯住"），不要尝试 `menu`/`menus` 等属性
