@@ -106,7 +106,7 @@ src/
   stores/               # Svelte stores（contactStore、uiStore）
   components/
     ContactPanel.svelte # 唯一 UI 组件（列表/详情/表单/对话框）
-  editor/               # @mention、slashCommand、linkPlugin
+  editor/               # mentionPlugin（/名字 斜杠链接）、slashCommand、linkPlugin
 tests/                  # IAL 解析、工具函数测试
 ```
 

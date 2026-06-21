@@ -12,9 +12,9 @@
     "default": "Contacts"
   },
   "description": {
-    "en_US": "Contact management plugin. Add contacts with phone, email, birthday, groups and more. Type @name in the editor to insert a link to a contact, or use /add-contact slash command.",
-    "zh_CN": "通讯录管理插件。支持多号码、多邮箱、分组标签。输入@名字自动插入链接，/add-contact 快速添加，点击号码复制到剪贴板。",
-    "default": "Contact management plugin. Add contacts with phone, email, birthday, groups and more. Type @name in the editor to link to a contact."
+    "en_US": "Contact management with multi-phone/email, group tags. Type /name in the editor to insert a contact link, or use /add-contact slash command. Click phone numbers to copy.",
+    "zh_CN": "通讯录管理插件。支持多号码、多邮箱、分组标签。输入/名字自动插入联系人链接，/add-contact 快速添加。点击号码复制到剪贴板。",
+    "default": "Contact management plugin. Multi-phone/email fields, group tags. Type /name to insert contact link, /add-contact to add."
   },
   "readme": {
     "en_US": "README.md",

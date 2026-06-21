@@ -8,7 +8,7 @@ A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plug
 - **Rich Contact Fields** — Name, multiple phone numbers, multiple emails, birthday, address, organization, groups, avatar, website, WeChat, QQ, and notes
 - **Multi-Value Fields** — Add/remove phone numbers and email addresses individually with +/− buttons
 - **Group Tags** — Organize contacts with custom tags and filter by them
-- **@Mention Integration** — Type `@name` in any document to insert a link to a contact
+- **Slash Command Linking** — Type `/name` in any document to insert a link to a contact
 - **Slash Command** — Type `/add-contact` to quickly add a new contact
 - **Click to Copy** — Click a phone number to copy it to clipboard (with visual toast)
 - **Contact as Document** — Each contact is a native SiYuan document, enabling all built-in features (linking, referencing, search)
@@ -45,9 +45,9 @@ Click the **blue floating button** (bottom-right corner) to slide out the contac
 
 ### Linking to Contacts
 
-- In any document, type `@` followed by the contact's name
-- Select the contact from the dropdown
-- A link to the contact will be inserted: `[Name](siyuan://blocks/ID)`
+- In any document, type `/` followed by the contact's name (e.g., `/张三`)
+- Select the contact from the slash menu
+- A clickable link to the contact will be inserted
 - Click the link to navigate to the contact document
 
 ### Organizing with Groups
@@ -87,7 +87,7 @@ src/
   components/
     ContactPanel.svelte All-in-one UI component (list, detail, form, dialogs)
   editor/
-    mentionPlugin.ts    @mention autocomplete
+    mentionPlugin.ts    Slash command contact linking (/name)
     slashCommand.ts     /add-contact slash command
     linkPlugin.ts       Click handler & context menu
   tests/

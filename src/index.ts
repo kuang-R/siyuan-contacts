@@ -10,7 +10,7 @@ import { ContactsApi } from './utils/api';
 import { ensureContactsNotebook } from './utils/notebook';
 import { initContactStore, loadAllContacts } from './stores/contactStore';
 import { openAddForm } from './stores/uiStore';
-import { registerMentionHint } from './editor/mentionPlugin';
+import { registerContactSlash } from './editor/mentionPlugin';
 import { registerSlashCommand } from './editor/slashCommand';
 import { registerClickHandler } from './editor/linkPlugin';
 import { PLUGIN_NAME } from './utils/constants';
@@ -175,6 +175,7 @@ export default class ContactsPlugin extends Plugin {
   // Commands & editors
   // ========================================================================
 
+  // Set on instance — SiYuan reads this when creating Protyle instances
   private setupCommands(): void {
     this.addCommand({
       langKey: 'quickAddContact',
@@ -187,8 +188,8 @@ export default class ContactsPlugin extends Plugin {
   }
 
   private setupEditorPlugins(): void {
-    const unregMention = registerMentionHint(this);
-    if (unregMention) this.editorCleanups.push(unregMention);
+    const unregContact = registerContactSlash(this);
+    if (unregContact) this.editorCleanups.push(unregContact);
     const unregSlash = registerSlashCommand(this);
     if (unregSlash) this.editorCleanups.push(unregSlash);
     const unregClick = registerClickHandler(this);
