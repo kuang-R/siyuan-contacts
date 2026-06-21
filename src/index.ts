@@ -232,7 +232,7 @@ export default class ContactsPlugin extends Plugin {
     if (unregContact) this.editorCleanups.push(unregContact);
     const unregSlash = registerSlashCommand(this);
     if (unregSlash) this.editorCleanups.push(unregSlash);
-    const unregClick = registerClickHandler(this);
+    const unregClick = registerClickHandler(this, () => this.openPanel());
     if (unregClick) this.editorCleanups.push(unregClick);
   }
 }

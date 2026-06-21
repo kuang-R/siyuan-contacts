@@ -21,17 +21,46 @@ import { L } from '../utils/i18n';
 
 /**
  * Register click handlers for contact-related navigation.
- * Returns a cleanup function that removes both event listeners.
+ *
+ * SiYuan's "open-siyuan-url-block" event is fire-and-forget (cannot cancel).
+ * Instead we intercept clicks in the CAPTURE phase on `[data-type="block-ref"]`
+ * elements, which fires BEFORE SiYuan's own handlers. For contact block-refs
+ * we stop propagation and open the slide-out panel instead of navigating.
+ *
+ * @param plugin  — SiYuan plugin instance
+ * @param openPanel — callback to physically open the contacts panel
+ * @returns cleanup function that removes all listeners
  */
-export function registerClickHandler(plugin: Plugin): () => void {
+export function registerClickHandler(plugin: Plugin, openPanel: () => void): () => void {
+  // Capture-phase interceptor — fires before SiYuan's bubble handlers
+  const clickCapture = (e: MouseEvent) => {
+    const target = (e.target as HTMLElement)?.closest?.('[data-type="block-ref"][data-id]') as HTMLElement | null;
+    if (!target) return;
+
+    const blockId = target.getAttribute('data-id');
+    if (!blockId) return;
+
+    const contactList = get(contacts);
+    if (!contactList.some((c) => c.id === blockId)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    openPanel();
+    viewContact(blockId);
+  };
+
+  document.addEventListener('click', clickCapture, true); // capture phase
+
+  // Keep eventBus listener for non-click triggers (e.g. middle-click, address bar)
   const urlHandler = (event: any) => {
     try {
       const { id } = event?.detail ?? {};
       if (!id) return;
 
       const contactList = get(contacts);
-      const isContact = contactList.some((c) => c.id === id);
-      if (isContact) {
+      if (contactList.some((c) => c.id === id)) {
+        openPanel();
         viewContact(id);
       }
     } catch (err) {
@@ -63,6 +92,7 @@ export function registerClickHandler(plugin: Plugin): () => void {
 
   // Return cleanup function
   return () => {
+    document.removeEventListener('click', clickCapture, true);
     plugin.eventBus.off('open-siyuan-url-block', urlHandler);
     plugin.eventBus.off('click-blockicon', blockIconHandler);
   };
