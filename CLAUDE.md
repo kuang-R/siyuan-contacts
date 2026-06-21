@@ -150,3 +150,4 @@ tests/                  # IAL 解析、工具函数测试
 - 通讯录笔记本**不能关闭**（`closeNotebook`）：关闭后 SQL 查不到联系人数据
 - 联系人链接点击拦截用**捕获阶段 + `stopImmediatePropagation`**，不要尝试 `open-siyuan-url-plugin`（Protyle 不渲染该协议链接）或 `open-siyuan-url-block`（通知事件，不能取消）
 - **删除联系人**：`removeDoc` 需要数据库 `path` 列（文件路径 `/xxx.sy`），不是 `hpath`（`/王五`）。删后调 `deleteBlock` 清数据库块，用 `contacts.update` 本地过滤即时刷新，**不要** `loadAllContacts`（SQL 缓存会返回旧数据重新覆盖）。`removeDoc` 失败时不要 throw——继续 deleteBlock + update
+- **只读保护恢复**：`ensureContactsReadonly()` 每次启动用一次 SQL（`WHERE ial NOT LIKE '%custom-sy-readonly%'`）找出缺失只读标记的联系人并补上，防止手动删除/恢复后属性丢失

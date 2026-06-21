@@ -8,7 +8,8 @@
 import { setLang, L } from './utils/i18n';
 import { ContactsApi } from './utils/api';
 import { ensureContactsNotebook } from './utils/notebook';
-import { initContactStore, loadAllContacts } from './stores/contactStore';
+import { initContactStore, loadAllContacts, contacts } from './stores/contactStore';
+import { get } from 'svelte/store';
 import { openAddForm } from './stores/uiStore';
 import { registerContactSlash } from './editor/mentionPlugin';
 import { registerSlashCommand } from './editor/slashCommand';
@@ -54,7 +55,7 @@ export default class ContactsPlugin extends Plugin {
     this.injectUI();
     this.setupCommands();
     this.setupEditorPlugins();
-    loadAllContacts();
+    loadAllContacts().then(() => this.ensureContactsReadonly());
   }
 
   async onunload(): Promise<void> {
@@ -203,6 +204,22 @@ export default class ContactsPlugin extends Plugin {
   }
 
   /** Read the actual SiYuan top bar bottom edge so panel aligns flush below it */
+  /** Ensure all contacts have custom-sy-readonly (may be lost on manual delete/restore) */
+  private async ensureContactsReadonly(): Promise<void> {
+    try {
+      if (!this.notebookId) return;
+      // Query all contact blocks missing custom-sy-readonly in one shot
+      const rows = await this.api.sqlQuery(
+        `SELECT id FROM blocks WHERE box = '${this.notebookId.replace(/'/g, "''")}'`
+        + ` AND type = 'd' AND ial LIKE '%custom-contact-name%'`
+        + ` AND ial NOT LIKE '%custom-sy-readonly%'`
+      );
+      for (const row of rows) {
+        await this.api.setBlockAttrs(row.id, { 'custom-sy-readonly': 'true' });
+      }
+    } catch { /* best-effort */ }
+  }
+
   private getTopBarHeight(): number {
     // Try known SiYuan toolbar selectors, use the bottom edge as offset
     const el = document.getElementById('toolbar')
