@@ -64,4 +64,4 @@ export const DOCK_CONFIG = {
 export const SEARCH_DEBOUNCE_MS = 300;
 
 // Maximum avatar size in bytes (64KB)
-export const MAX_AVATAR_SIZE = 64 * 1024;
+export const MAX_AVATAR_SIZE = 128 * 1024;

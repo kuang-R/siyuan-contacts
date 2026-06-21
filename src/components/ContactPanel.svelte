@@ -143,7 +143,10 @@
     const f = (e.target as HTMLInputElement).files?.[0];
     if (!f) return;
     avatarErr = '';
-    if (f.size > MAX_AVATAR_SIZE) { avatarErr = L('avatarTooLarge'); return; }
+    if (f.size > MAX_AVATAR_SIZE) {
+      avatarErr = L('avatarTooLarge').replace('{size}', String(Math.round(MAX_AVATAR_SIZE / 1024)) + 'KB');
+      return;
+    }
     const r = new FileReader();
     r.onload = () => { avatarPrev = r.result as string; fAvatar = r.result as string; };
     r.readAsDataURL(f);
