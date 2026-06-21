@@ -88,6 +88,16 @@ export class ContactsApi {
     return notebook;
   }
 
+  /**
+   * Open/reopen a notebook (show in document tree).
+   */
+  async openNotebook(notebookId: string): Promise<void> {
+    const res = await this.client.openNotebook({ notebook: notebookId });
+    if (res?.code !== 0) {
+      throw new Error(`Failed to open notebook: ${res?.msg ?? 'unknown error'}`);
+    }
+  }
+
   // ==========================================================================
   // Document Operations
   // ==========================================================================

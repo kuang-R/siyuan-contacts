@@ -16,17 +16,29 @@ import { CONTACTS_NOTEBOOK_NAME, CONTACTS_NOTEBOOK_NAME_EN, PLUGIN_NAME } from '
  * @throws If notebook cannot be found or created
  */
 export async function ensureContactsNotebook(api: ContactsApi): Promise<string> {
-  // Try Chinese name first
-  let notebook = await api.findNotebookByName(CONTACTS_NOTEBOOK_NAME);
-  if (notebook) {
-    console.log(`[${PLUGIN_NAME}] Found notebook: "${notebook.name}" (${notebook.id})`);
-    return notebook.id;
+  // List all notebooks to detect closed ones or duplicates
+  const allNotebooks = await api.listNotebooks();
+
+  // Find all notebooks with our target names (including closed ones)
+  const candidates = allNotebooks.filter(
+    n => n.name === CONTACTS_NOTEBOOK_NAME || n.name === CONTACTS_NOTEBOOK_NAME_EN
+  );
+
+  // Reopen any closed candidates (e.g. accidentally closed by a previous version)
+  for (const nb of candidates) {
+    if (nb.closed) {
+      console.log(`[${PLUGIN_NAME}] Reopening closed notebook: "${nb.name}"`);
+      await api.openNotebook(nb.id);
+    }
   }
 
-  // Try English name
-  notebook = await api.findNotebookByName(CONTACTS_NOTEBOOK_NAME_EN);
+  // Prefer Chinese name, then English, then first candidate
+  let notebook = candidates.find(n => n.name === CONTACTS_NOTEBOOK_NAME)
+    ?? candidates.find(n => n.name === CONTACTS_NOTEBOOK_NAME_EN)
+    ?? candidates[0];
+
   if (notebook) {
-    console.log(`[${PLUGIN_NAME}] Found notebook: "${notebook.name}" (${notebook.id})`);
+    console.log(`[${PLUGIN_NAME}] Using notebook: "${notebook.name}" (${notebook.id})`);
     return notebook.id;
   }
 

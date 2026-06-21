@@ -73,6 +73,22 @@ if (!Plugin) throw new Error('...');
 - `toggleFab()` 创建/销毁 FAB，通过 `this.panelComponent.$set({ showFab })` 同步到 Svelte 组件
 - 插件数据用 `this.data` 持久化，SiYuan 自动 JSON 序列化
 
+### 笔记本架构
+
+联系人存储在专用笔记本中，每个联系人为独立 `.sy` 文档：
+
+- `ensureContactsNotebook()` 查找/创建"通讯录"笔记本，自动重新打开被意外关闭的笔记本
+- **不能 `closeNotebook`**：关闭后 SQL 查询不到数据，联系人列表变空。`ensureContactsNotebook` 会自动检测并修复
+- 重复笔记本处理：filter 全部候选人 → 重新打开 closed 的 → 按中/英文名优先级选取
+
+### 联系人链接与点击拦截
+
+插入联系人链接用 `<span data-type="block-ref">`（思源原生块引用，确保可点击）：
+
+- **`open-siyuan-url-block` 事件不能取消导航**——它是通知型事件，在导航之后才触发
+- **`siyuan://plugins/` 协议不可行**——Protyle 不渲染为可点击链接
+- **正确做法**：`document.addEventListener('click', handler, true)` 捕获阶段拦截，`stopImmediatePropagation()` 在思源处理器看到之前截住点击，打开面板代替跳转
+
 ### Svelte：单文件组件 + 手动订阅
 
 **所有 UI 在一个 `ContactPanel.svelte` 中**，不导入任何子组件（Rollup 会树摇掉 Svelte 子组件导入）。模板中避免：
@@ -131,3 +147,5 @@ tests/                  # IAL 解析、工具函数测试
 - Store 导航注意：`selectedContactId.set(id)` 当值相同时 Svelte store 不触发订阅者。`viewContact` 先 `set(null)` 再 `set(id)` 强制刷新
 - 插件→Svelte 通信：通过 props 传递数据和回调（`showFab`/`onToggleFab`），运行时更新用 `this.panelComponent.$set({ key: value })`
 - 思源顶部栏右键菜单不支持插件自定义项（内核只放"取消盯住"），不要尝试 `menu`/`menus` 等属性
+- 通讯录笔记本**不能关闭**（`closeNotebook`）：关闭后 SQL 查不到联系人数据
+- 联系人链接点击拦截用**捕获阶段 + `stopImmediatePropagation`**，不要尝试 `open-siyuan-url-plugin`（Protyle 不渲染该协议链接）或 `open-siyuan-url-block`（通知事件，不能取消）
