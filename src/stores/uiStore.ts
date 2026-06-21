@@ -27,6 +27,9 @@ export const isSaving = writable<boolean>(false);
  * Navigate to the contact detail view.
  */
 export function viewContact(id: string): void {
+  // Toggle to null first so the subscriber always fires,
+  // even when viewing the same contact after an update.
+  selectedContactId.set(null);
   selectedContactId.set(id);
   panelView.set('detail');
 }
