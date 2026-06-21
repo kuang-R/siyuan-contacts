@@ -2,7 +2,7 @@
   "name": "siyuan-contacts",
   "author": "ruan",
   "url": "https://github.com/ruan/siyuan-contacts",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "minAppVersion": "2.9.0",
   "backends": ["windows", "linux", "darwin", "docker"],
   "frontends": ["desktop", "desktop-window", "browser-desktop"],
@@ -12,9 +12,9 @@
     "default": "Contacts"
   },
   "description": {
-    "en_US": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Type /name to insert a contact link, /add-contact to quick-add. Top bar button + optional floating button for quick access. FAB can be toggled from panel. Click phone numbers to copy. Full i18n (zh_CN/en_US).",
-    "zh_CN": "通讯录插件。多号码、多邮箱、分组标签、排序筛选。输入/名字插入联系人链接，/add-contact 快速添加。顶部栏 + 可切换的浮动按钮，一键打开。面板内开关控制浮动按钮显隐。点击号码复制。完整中英文国际化。",
-    "default": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Type /name to insert contact link, /add-contact to quick-add. Top bar button + toggleable FAB for quick access."
+    "en_US": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Avatar support. Type /name to insert a contact link, /add-contact to quick-add. Top bar + toggleable FAB. Auto-refresh on open. Click phone to copy. Read-only docs. Full i18n.",
+    "zh_CN": "通讯录插件。多号码、多邮箱、分组标签、排序筛选、头像支持。输入/名字插入链接，/add-contact 快速添加。顶部栏 + 可切换浮动按钮。打开自动刷新。点击号码复制。文档只读保护。完整中英文。",
+    "default": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter, avatar. Type /name for link, /add-contact to add. Top bar + toggleable FAB. Auto-refresh. Click to copy. Read-only docs."
   },
   "readme": {
     "en_US": "README.md",

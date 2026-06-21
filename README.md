@@ -4,16 +4,18 @@ A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plug
 
 ## Features
 
-- **Slide-out Panel** — Click the floating button (bottom-right) or the top bar icon to open the contacts panel
+- **Slide-out Panel** — Click the floating button (bottom-right) or the top bar icon to open the contacts panel; auto-refreshes on every open
 - **Toggleable FAB** — Show or hide the floating button from the panel toolbar (● visible / ○ hidden), with toast confirmation
-- **Rich Contact Fields** — Name, multiple phone numbers, multiple emails, birthday, address, organization, groups, avatar, website, WeChat, QQ, and notes
+- **Rich Contact Fields** — Name, multiple phone numbers, multiple emails, birthday, address, organization, groups, avatar (with image preview), website, WeChat, QQ, and notes
+- **Avatar Support** — Upload profile images (≤128KB), displayed in list and detail views
 - **Multi-Value Fields** — Add/remove phone numbers and email addresses individually with +/− buttons
 - **Group Tags** — Organize contacts with custom tags and filter by them
 - **Sort Options** — Sort by name (A-Z / Z-A), recently added, or recently updated
-- **Slash Command Linking** — Type `/name` in any document to insert a link to a contact
+- **Slash Command Linking** — Type `/name` in any document to insert a link to a contact; clicking opens the panel instead of navigating
 - **Slash Command** — Type `/add-contact` to quickly add a new contact
 - **Click to Copy** — Click a phone number to copy it to clipboard (with visual toast)
-- **Contact as Document** — Each contact is a native SiYuan document, enabling all built-in features (linking, referencing, search)
+- **Read-Only Documents** — Contact documents are protected from direct editing in the file tree
+- **Contact as Document** — Each contact is a native SiYuan document, enabling all built-in features (linking, referencing, search, data history)
 - **Full i18n** — Complete Chinese (zh_CN) and English (en_US) translations
 
 ## Installation
