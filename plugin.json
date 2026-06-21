@@ -2,7 +2,7 @@
   "name": "siyuan-contacts",
   "author": "ruan",
   "url": "https://github.com/ruan/siyuan-contacts",
-  "version": "0.2.0",
+  "version": "0.5.0",
   "minAppVersion": "2.9.0",
   "backends": ["windows", "linux", "darwin", "docker"],
   "frontends": ["desktop", "desktop-window", "browser-desktop"],
@@ -12,9 +12,9 @@
     "default": "Contacts"
   },
   "description": {
-    "en_US": "Contact management with multi-phone/email, group tags. Type /name in the editor to insert a contact link, or use /add-contact slash command. Click phone numbers to copy.",
-    "zh_CN": "通讯录管理插件。支持多号码、多邮箱、分组标签。输入/名字自动插入联系人链接，/add-contact 快速添加。点击号码复制到剪贴板。",
-    "default": "Contact management plugin. Multi-phone/email fields, group tags. Type /name to insert contact link, /add-contact to add."
+    "en_US": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Type /name to insert a contact link, /add-contact to quick-add. Top bar button for one-click access. Click phone numbers to copy. Full i18n (zh_CN/en_US).",
+    "zh_CN": "通讯录插件。多号码、多邮箱、分组标签、排序筛选。输入/名字插入联系人链接，/add-contact 快速添加。右上角插件栏一键打开。点击号码复制。完整中英文国际化。",
+    "default": "Contact/address book plugin. Multi-phone/email, group tags, sort & filter. Type /name to insert contact link, /add-contact to quick-add. Top bar button for one-click access."
   },
   "readme": {
     "en_US": "README.md",

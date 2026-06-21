@@ -5,7 +5,7 @@
  * Bypasses SiYuan dock/tab APIs which vary across frontend modes.
  */
 
-import { setLang } from './utils/i18n';
+import { setLang, L } from './utils/i18n';
 import { ContactsApi } from './utils/api';
 import { ensureContactsNotebook } from './utils/notebook';
 import { initContactStore, loadAllContacts } from './stores/contactStore';
@@ -175,8 +175,15 @@ export default class ContactsPlugin extends Plugin {
   // Commands & editors
   // ========================================================================
 
-  // Set on instance — SiYuan reads this when creating Protyle instances
   private setupCommands(): void {
+    // Top bar button — opens the contacts panel
+    this.addTopBar?.({
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      title: L('pluginName'),
+      callback: () => this.openPanel(),
+    });
+
+    // Hotkey command — quick add contact
     this.addCommand({
       langKey: 'quickAddContact',
       hotkey: 'Ctrl+Shift+A',

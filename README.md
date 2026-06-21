@@ -4,14 +4,16 @@ A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plug
 
 ## Features
 
-- **Slide-out Panel** — Click the floating button (bottom-right) to open the contacts panel
+- **Slide-out Panel** — Click the floating button (bottom-right) or the top bar icon to open the contacts panel
 - **Rich Contact Fields** — Name, multiple phone numbers, multiple emails, birthday, address, organization, groups, avatar, website, WeChat, QQ, and notes
 - **Multi-Value Fields** — Add/remove phone numbers and email addresses individually with +/− buttons
 - **Group Tags** — Organize contacts with custom tags and filter by them
+- **Sort Options** — Sort by name (A-Z / Z-A), recently added, or recently updated
 - **Slash Command Linking** — Type `/name` in any document to insert a link to a contact
 - **Slash Command** — Type `/add-contact` to quickly add a new contact
 - **Click to Copy** — Click a phone number to copy it to clipboard (with visual toast)
 - **Contact as Document** — Each contact is a native SiYuan document, enabling all built-in features (linking, referencing, search)
+- **Full i18n** — Complete Chinese (zh_CN) and English (en_US) translations
 
 ## Installation
 
@@ -29,7 +31,9 @@ Search for "siyuan-contacts" in the SiYuan marketplace.
 
 ### Opening the Panel
 
-Click the **blue floating button** (bottom-right corner) to slide out the contacts panel. Click the backdrop or press Escape to close it.
+- Click the **blue floating button** (bottom-right corner) to slide out the contacts panel
+- Or click the **contacts icon** in the top bar (right side of the SiYuan toolbar)
+- Click the backdrop or press Escape to close
 
 ### Adding a Contact
 
