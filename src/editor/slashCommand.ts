@@ -12,6 +12,7 @@
 import type { Plugin } from 'siyuan';
 import { openAddForm } from '../stores/uiStore';
 import { PLUGIN_NAME } from '../utils/constants';
+import { L } from '../utils/i18n';
 
 /**
  * SiYuan slash command filter keywords for triggering this command.
@@ -82,10 +83,14 @@ function buildSlashMenuHtml(): string {
       <span class="b3-menu__icon" style="display:inline-flex;align-items:center;justify-content:center;">
         ${iconSvg}
       </span>
-      <span class="b3-menu__label">Add Contact to Address Book</span>
+      <span class="b3-menu__label">${escHtml(L('addContactSlashLabel'))}</span>
       <span class="b3-menu__accelerator" style="font-size:11px;color:var(--b3-theme-on-surface-light);margin-left:auto;">
-        通讯录
+        ${escHtml(L('pluginName'))}
       </span>
     </div>
   `;
+}
+
+function escHtml(s: string): string {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }

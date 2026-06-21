@@ -117,4 +117,5 @@ tests/                  # IAL 解析、工具函数测试
 - 头像 base64 data URI，限制 64KB
 - 搜索为客户端过滤，不每次请求服务端
 - 语言检测：`window.siyuan.config.lang`，默认 `zh_CN`
-- i18n 模板调用：`L('key')` 而非 `t('key')`（避免 Rollup 改名）
+- i18n 统一用 `L('key')`：`i18n.ts` 导出 `export const L = t` 别名，非 Svelte 文件直接 `import { L }`；Svelte 组件内定义局部 `function L(key) { return t(key); }`（避免 Rollup IIFE 改名）
+- Store 导航注意：`selectedContactId.set(id)` 当值相同时 Svelte store 不触发订阅者。`viewContact` 先 `set(null)` 再 `set(id)` 强制刷新

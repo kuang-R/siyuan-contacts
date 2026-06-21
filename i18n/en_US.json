@@ -42,5 +42,9 @@
   "loading": "Loading...",
   "errorLoading": "Failed to load contacts",
   "noGroup": "Ungrouped",
-  "copied": "Copied"
+  "copied": "Copied",
+  "avatarTooLarge": "File too large",
+  "viewContactDetails": "View Contact Details",
+  "refreshContacts": "Refresh Contacts",
+  "addContactSlashLabel": "Add Contact to Address Book"
 }

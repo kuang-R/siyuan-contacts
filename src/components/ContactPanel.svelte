@@ -133,7 +133,7 @@
     const f = (e.target as HTMLInputElement).files?.[0];
     if (!f) return;
     avatarErr = '';
-    if (f.size > MAX_AVATAR_SIZE) { avatarErr = 'Too large'; return; }
+    if (f.size > MAX_AVATAR_SIZE) { avatarErr = L('avatarTooLarge'); return; }
     const r = new FileReader();
     r.onload = () => { avatarPrev = r.result as string; fAvatar = r.result as string; };
     r.readAsDataURL(f);
@@ -151,10 +151,10 @@
       <input type="text" class="s-in" placeholder={L('searchPlaceholder')} value={_search}
         on:input={e => searchText.set(e.target.value)} />
       <select class="s-sel" value={_sort} on:change={e => sortMode.set(e.target.value)}>
-        <option value={ContactSortMode.NAME_ASC}>A-Z</option>
-        <option value={ContactSortMode.NAME_DESC}>Z-A</option>
-        <option value={ContactSortMode.CREATED_DESC}>New</option>
-        <option value={ContactSortMode.UPDATED_DESC}>Recent</option>
+        <option value={ContactSortMode.NAME_ASC}>{L('sortByNameAsc')}</option>
+        <option value={ContactSortMode.NAME_DESC}>{L('sortByNameDesc')}</option>
+        <option value={ContactSortMode.CREATED_DESC}>{L('sortByCreated')}</option>
+        <option value={ContactSortMode.UPDATED_DESC}>{L('sortByUpdated')}</option>
       </select>
       <button type="button" class="btn-add" on:click={goAdd}>+</button>
     </div>

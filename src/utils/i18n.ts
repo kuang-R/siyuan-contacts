@@ -27,6 +27,9 @@ export function t(key: string): string {
   return messages[currentLang]?.[key] ?? key;
 }
 
+/** Alias for t() — unified i18n call across all files */
+export const L = t;
+
 /**
  * Get the current language code.
  */

@@ -17,6 +17,7 @@ import { contacts, loadAllContacts } from '../stores/contactStore';
 import { viewContact } from '../stores/uiStore';
 import { get } from 'svelte/store';
 import { PLUGIN_NAME } from '../utils/constants';
+import { L } from '../utils/i18n';
 
 /**
  * Register click handlers for contact-related navigation.
@@ -84,7 +85,7 @@ function addContactMenuItems(menu: any, blockId: string): void {
 
   // "View Contact Details" menu item
   menu.addItem({
-    label: '📇 View Contact Details',
+    label: `📇 ${L('viewContactDetails')}`,
     icon: 'iconAccount',
     click: () => {
       viewContact(blockId);
@@ -93,7 +94,7 @@ function addContactMenuItems(menu: any, blockId: string): void {
 
   // "Refresh Contacts" menu item
   menu.addItem({
-    label: '🔄 Refresh Contacts',
+    label: `🔄 ${L('refreshContacts')}`,
     icon: 'iconRefresh',
     click: async () => {
       await loadAllContacts();

@@ -42,5 +42,9 @@
   "loading": "加载中...",
   "errorLoading": "加载联系人失败",
   "noGroup": "未分组",
-  "copied": "已复制"
+  "copied": "已复制",
+  "avatarTooLarge": "文件过大",
+  "viewContactDetails": "查看联系人详情",
+  "refreshContacts": "刷新联系人",
+  "addContactSlashLabel": "添加联系人到通讯录"
 }
