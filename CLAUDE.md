@@ -69,9 +69,9 @@ if (!Plugin) throw new Error('...');
 
 思源顶部栏右键菜单不支持插件自定义菜单项（内核硬编码只放"取消盯住"）。配置项直接放在面板 UI 中：
 
-- **FAB 显隐开关**：面板工具栏 ●/○ 按钮，状态存储在 `plugin.data.showFab`（默认 `true`）
+- **FAB 显隐开关**：面板工具栏 ●/○ 按钮，状态存储在 `localStorage`（`siyuan-contacts-showFab`，默认 `true`）
 - `toggleFab()` 创建/销毁 FAB，通过 `this.panelComponent.$set({ showFab })` 同步到 Svelte 组件
-- 插件数据用 `this.data` 持久化，SiYuan 自动 JSON 序列化
+- 不用 `this.data`/`saveData()` 持久化 FAB 状态——`saveData()` 因思源序列化机制会抛异常
 
 ### 笔记本架构
 

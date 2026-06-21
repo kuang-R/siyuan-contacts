@@ -42,11 +42,6 @@ export default class ContactsPlugin extends Plugin {
     const lang = window?.siyuan?.config?.lang ?? 'zh_CN';
     setLang(lang);
 
-    // Init persisted settings (defaults)
-    if (this.data.showFab === undefined) {
-      this.data.showFab = true;
-    }
-
     this.api = new ContactsApi();
     try {
       this.notebookId = await ensureContactsNotebook(this.api);
@@ -78,10 +73,24 @@ export default class ContactsPlugin extends Plugin {
   // UI: Floating button + backdrop + slide-out panel
   // ========================================================================
 
+  private get showFabSetting(): boolean {
+    try {
+      const stored = localStorage.getItem('siyuan-contacts-showFab');
+      if (stored === 'false') return false;
+    } catch { /* ignore */ }
+    return true; // default: visible
+  }
+
+  private set showFabSetting(v: boolean) {
+    try {
+      localStorage.setItem('siyuan-contacts-showFab', String(v));
+    } catch { /* ignore */ }
+  }
+
   private injectUI(): void {
     this.createBackdrop();
     this.createPanel();
-    if (this.data.showFab) {
+    if (this.showFabSetting) {
       this.createFAB();
     }
   }
@@ -121,7 +130,7 @@ export default class ContactsPlugin extends Plugin {
       props: {
         api: this.api,
         notebookId: this.notebookId,
-        showFab: this.data.showFab,
+        showFab: this.showFabSetting,
         onToggleFab: () => this.toggleFab(),
       },
     });
@@ -212,15 +221,16 @@ export default class ContactsPlugin extends Plugin {
   // ========================================================================
 
   private toggleFab(): void {
-    this.data.showFab = !this.data.showFab;
-    if (this.data.showFab) {
+    const next = !this.showFabSetting;
+    this.showFabSetting = next;
+    if (next) {
       if (!this.fabBtn) this.createFAB();
     } else {
       this.removeFAB();
     }
     // Sync the Svelte component's showFab prop
     if (this.panelComponent) {
-      this.panelComponent.$set({ showFab: this.data.showFab });
+      this.panelComponent.$set({ showFab: next });
     }
   }
 
