@@ -279,7 +279,7 @@ export default class ContactsPlugin extends Plugin {
   private setupEditorPlugins(): void {
     const unregContact = registerContactSlash(this);
     if (unregContact) this.editorCleanups.push(unregContact);
-    const unregSlash = registerSlashCommand(this);
+    const unregSlash = registerSlashCommand(this, () => this.openPanel());
     if (unregSlash) this.editorCleanups.push(unregSlash);
     const unregClick = registerClickHandler(this, () => this.openPanel());
     if (unregClick) this.editorCleanups.push(unregClick);

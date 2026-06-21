@@ -149,6 +149,7 @@ tests/                  # IAL 解析、工具函数测试
 - 思源顶部栏右键菜单不支持插件自定义项（内核只放"取消盯住"），不要尝试 `menu`/`menus` 等属性
 - 通讯录笔记本**不能关闭**（`closeNotebook`）：关闭后 SQL 查不到联系人数据
 - 联系人链接点击拦截用**捕获阶段 + `stopImmediatePropagation`**，不要尝试 `open-siyuan-url-plugin`（Protyle 不渲染该协议链接）或 `open-siyuan-url-block`（通知事件，不能取消）
+- **`/add-contact` 斜杠命令**：回调需先调 `openPanel()` 再 `openAddForm()`。用 `protyle.insert('​')`（零宽空格）通知 Protyle 替换斜杠文本，否则原文残留
 - **删除联系人**：面板只提示用户手动在文档树中删除，不调 API。因为 `removeDoc` 与文件树 UI 行为不一致（内核异步清理，块可能残留）
 - **孤儿块过滤**：`loadAllContacts()` 用 `listDocsByPath` 获取实际存在的文档 ID 集合，与 SQL 查出的联系人交叉比对，过滤已删除的孤儿块
 - **自动刷新**：每次 `openPanel()` 调 `loadAllContacts()`，确保手动删除后打开面板即时反映

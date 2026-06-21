@@ -32,14 +32,17 @@ const SLASH_FILTERS = [
  * Register the /add-contact slash command with SiYuan.
  * Returns a cleanup function that removes the slash command from the array.
  */
-export function registerSlashCommand(plugin: Plugin): () => void {
+export function registerSlashCommand(plugin: Plugin, openPanel: () => void): () => void {
   const slashId = `${PLUGIN_NAME}-add-contact`;
   const slashItem = {
     filter: SLASH_FILTERS,
     html: buildSlashMenuHtml(),
     id: slashId,
-    callback: (_protyle: any) => {
+    callback: (protyle: any) => {
       try {
+        // Replace slash text by inserting empty content
+        try { protyle.insert('​'); } catch {}  // zero-width space
+        openPanel();
         openAddForm();
       } catch (err) {
         console.error(`[${PLUGIN_NAME}] Failed to open add form:`, err);
