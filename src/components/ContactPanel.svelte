@@ -3,7 +3,7 @@
   import {
     contacts, isLoading, error, sortMode, searchText, selectedGroup,
     filteredContacts, allGroups, loadAllContacts,
-    createContact, updateContact, deleteContact,
+    createContact, updateContact,
   } from '../stores/contactStore';
   import {
     panelView, selectedContactId, showDeleteConfirm, isSaving,
@@ -114,9 +114,9 @@
 
   function doDelete() {
     if (!_cid) return;
-    isSaving.set(true);
-    deleteContact(_cid).then(() => backToList())
-      .catch(e => console.error(e)).finally(() => isSaving.set(false));
+    // Just dismiss — user manually deletes the .sy doc from file tree
+    cancelDelete();
+    backToList();
   }
 
   function openSiYuan(id: string) {
@@ -182,6 +182,12 @@
             <circle cx="8" cy="8" r="1.5"/>
           </svg>
         {/if}
+      </button>
+      <button type="button" class="btn-fab" on:click={() => loadAllContacts()} title="刷新">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 8a6 6 0 0 1 10.47-4M14 8a6 6 0 0 1-10.47 4"/>
+          <path d="M14 2v4h-4M2 14v-4h4"/>
+        </svg>
       </button>
       <button type="button" class="btn-add" on:click={goAdd}>+</button>
     </div>
@@ -329,10 +335,9 @@
 {#if _showDel && _contact}
   <div class="del-overlay" on:click|self={cancelDel}>
     <div class="del-box">
-      <p>{L('confirmDelete')} "{_contact.name}"?</p>
+      <p>{L('confirmDelete')}</p>
       <div class="del-btns">
-        <button on:click={cancelDel}>{L('cancel')}</button>
-        <button class="del-ok" on:click={doDelete}>{L('delete')}</button>
+        <button class="del-ok" on:click={doDelete}>{L('ok')}</button>
       </div>
     </div>
   </div>

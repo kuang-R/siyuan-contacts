@@ -151,7 +151,13 @@ export async function loadAllContacts(): Promise<void> {
   try {
     const query = buildListContactsQuery(notebookId);
     const rows = await api.sqlQuery(query);
-    const parsed = rows.map(parseContactFromRow).filter((c): c is Contact => c !== null);
+    let parsed = rows.map(parseContactFromRow).filter((c): c is Contact => c !== null);
+
+    // Cross-reference with actual files — orphan blocks may outlive .sy files
+    const docs = await api.listDocsByPath(notebookId, '/');
+    const existingIds = new Set(docs.map((d: any) => d.id));
+    parsed = parsed.filter(c => existingIds.has(c.id));
+
     contacts.set(parsed);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

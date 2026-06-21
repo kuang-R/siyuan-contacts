@@ -146,7 +146,8 @@ export class ContactsApi {
       notebook: notebookId,
       path,
     });
-    return (res?.data ?? []) as DocInfo[];
+    const data = res?.data as any;
+    return (data?.files ?? []) as DocInfo[];
   }
 
   // ==========================================================================

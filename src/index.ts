@@ -189,6 +189,8 @@ export default class ContactsPlugin extends Plugin {
     this.backdropEl.style.opacity = '1';
     this.backdropEl.style.pointerEvents = 'auto';
     if (this.fabBtn) this.fabBtn.style.opacity = '0.3';
+    // Auto-refresh contacts on every open
+    loadAllContacts();
   }
 
   private closePanel(): void {
