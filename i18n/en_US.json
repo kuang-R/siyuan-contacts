@@ -41,5 +41,6 @@
   "contactDeleted": "Contact deleted",
   "loading": "Loading...",
   "errorLoading": "Failed to load contacts",
-  "noGroup": "Ungrouped"
+  "noGroup": "Ungrouped",
+  "copied": "Copied"
 }

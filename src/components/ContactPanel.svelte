@@ -16,10 +16,9 @@
   export let api: any;
   export let notebookId: string | null = null;
 
-  // ===== Local label strings — avoids calling t() in template =====
   function L(key: string): string { return t(key); }
 
-  // ===== Local state mirrors stores =====
+  // Local state
   let _contacts: any[] = [], _loading = false, _error: string|null = null;
   let _sort = ContactSortMode.NAME_ASC, _search = '', _group = '';
   let _filtered: any[] = [], _groups: string[] = [];
@@ -27,8 +26,9 @@
   let _showDel = false, _saving = false, _isList = true, _hasSearch = false;
 
   // Form fields
-  let fName = '', fPhone = '', fEmail = '', fBirthday = '', fAddr = '',
-    fOrg = '', fNotes = '', fGroups = '', fAvatar = '', fWeb = '', fWx = '', fQq = '';
+  let fName = '', fPhones: string[] = [''], fEmails: string[] = [''],
+    fBirthday = '', fAddr = '', fOrg = '', fNotes = '', fGroups = '',
+    fAvatar = '', fWeb = '', fWx = '', fQq = '';
   let avatarPrev = '', avatarErr = '';
 
   const unsubs: Array<()=>void> = [];
@@ -53,6 +53,32 @@
 
   onDestroy(() => { unsubs.forEach(f => f()); });
 
+  // Phone/email helpers
+  function parseMulti(v: string): string[] {
+    const arr = v ? String(v).split(',').map(s => s.trim()).filter(Boolean) : [];
+    return arr.length > 0 ? arr : [''];
+  }
+  function joinMulti(arr: string[]): string {
+    return arr.map(s => s.trim()).filter(Boolean).join(', ');
+  }
+  function addPhone() { fPhones = [...fPhones, '']; }
+  function rmPhone(i: number) { if (fPhones.length > 1) { fPhones.splice(i, 1); fPhones = fPhones; } }
+  function addEmail() { fEmails = [...fEmails, '']; }
+  function rmEmail(i: number) { if (fEmails.length > 1) { fEmails.splice(i, 1); fEmails = fEmails; } }
+
+  function initForm(c: any) {
+    fName = c?.name || '';
+    fPhones = parseMulti(c?.phone);
+    fEmails = parseMulti(c?.email);
+    fBirthday = c?.birthday || ''; fAddr = c?.address || ''; fOrg = c?.org || '';
+    fNotes = c?.notes || ''; fGroups = c?.groups?.join(', ') || '';
+    fAvatar = c?.avatar || ''; fWeb = c?.website || '';
+    fWx = c?.wechat || ''; fQq = c?.qq || '';
+    avatarPrev = c?.avatar || ''; avatarErr = '';
+  }
+  $: if (_view === 'edit-form' && _contact) initForm(_contact);
+  $: if (_view === 'add-form' && !_contact) initForm(null);
+
   function getBrief(c: any): string {
     const parts = [c.phone, c.email, c.org].filter(Boolean).map(p => String(p).split(',')[0].trim());
     return parts.slice(0,2).join(' · ') || ' ';
@@ -63,15 +89,6 @@
       tn.split(/\s+/).filter(Boolean).map(p=>p[0].toUpperCase()).slice(0,2).join('');
   }
 
-  function initForm(c: any) {
-    fName=c?.name||''; fPhone=c?.phone||''; fEmail=c?.email||''; fBirthday=c?.birthday||'';
-    fAddr=c?.address||''; fOrg=c?.org||''; fNotes=c?.notes||'';
-    fGroups=c?.groups?.join(', ')||''; fAvatar=c?.avatar||''; fWeb=c?.website||'';
-    fWx=c?.wechat||''; fQq=c?.qq||''; avatarPrev=c?.avatar||''; avatarErr='';
-  }
-  $: if (_view === 'edit-form' && _contact) initForm(_contact);
-  $: if (_view === 'add-form' && !_contact) initForm(null);
-
   function goAdd() { openAddForm(); }
   function goBack() { backToList(); }
   function goEdit() { if (_cid) openEditForm(_cid); }
@@ -81,9 +98,11 @@
   function saveForm() {
     if (!fName.trim()) return;
     isSaving.set(true);
-    const data = { name:fName, phone:fPhone, email:fEmail, birthday:fBirthday,
-      address:fAddr, org:fOrg, notes:fNotes, groups:fGroups, avatar:fAvatar,
-      website:fWeb, wechat:fWx, qq:fQq };
+    const data = {
+      name: fName, phone: joinMulti(fPhones), email: joinMulti(fEmails),
+      birthday: fBirthday, address: fAddr, org: fOrg, notes: fNotes,
+      groups: fGroups, avatar: fAvatar, website: fWeb, wechat: fWx, qq: fQq,
+    };
     (_view === 'edit-form' && _cid
       ? updateContact(_cid, data).then(() => viewContact(_cid!))
       : createContact(data).then(() => backToList())
@@ -100,6 +119,14 @@
 
   function openSiYuan(id: string) {
     try { window.siyuan?.ws?.send({ type:'openTab', data:{ doc:{ id } } }); } catch {}
+  }
+
+  let copiedNum = '';
+  function copyTel(e: Event, num: string) {
+    e.preventDefault();
+    try { navigator.clipboard?.writeText(num); } catch {}
+    copiedNum = num;
+    setTimeout(() => copiedNum = '', 2000);
   }
 
   function onAvatarFile(e: Event) {
@@ -169,12 +196,23 @@
     <div class="d-body">
       <div class="d-av-row"><div class="av-lg">{getInitials(_contact.name)}</div></div>
       <div class="d-row"><span class="d-l">{L('name')}</span><span class="d-v b">{_contact.name}</span></div>
-      {#if _contact.phone}<div class="d-row"><span class="d-l">{L('phone')}</span><span class="d-v">{_contact.phone}</span></div>{/if}
-      {#if _contact.email}<div class="d-row"><span class="d-l">{L('email')}</span><span class="d-v">{_contact.email}</span></div>{/if}
+      {#if _contact.phone}
+        <div class="d-row"><span class="d-l">{L('phone')}</span>
+          <span class="d-v">{#each parseMulti(_contact.phone).filter(Boolean) as p, i}
+            {#if i>0}, {/if}<a href="tel:{p}" class="link" on:click={(e) => copyTel(e, p)}>{p}</a>{/each}</span></div>
+      {/if}
+      {#if copiedNum}
+        <div class="toast">📋 {copiedNum} {L('copied')}</div>
+      {/if}
+      {#if _contact.email}
+        <div class="d-row"><span class="d-l">{L('email')}</span>
+          <span class="d-v">{#each parseMulti(_contact.email).filter(Boolean) as e, i}
+            {#if i>0}, {/if}<a href="mailto:{e}" class="link">{e}</a>{/each}</span></div>
+      {/if}
       {#if _contact.birthday}<div class="d-row"><span class="d-l">{L('birthday')}</span><span class="d-v">{_contact.birthday}</span></div>{/if}
       {#if _contact.address}<div class="d-row"><span class="d-l">{L('address')}</span><span class="d-v">{_contact.address}</span></div>{/if}
       {#if _contact.org}<div class="d-row"><span class="d-l">{L('org')}</span><span class="d-v">{_contact.org}</span></div>{/if}
-      {#if _contact.website}<div class="d-row"><span class="d-l">{L('website')}</span><span class="d-v">{_contact.website}</span></div>{/if}
+      {#if _contact.website}<div class="d-row"><span class="d-l">{L('website')}</span><span class="d-v"><a href={_contact.website.startsWith('http')?_contact.website:'https://'+_contact.website} target="_blank" class="link">{_contact.website}</a></span></div>{/if}
       {#if _contact.wechat}<div class="d-row"><span class="d-l">{L('wechat')}</span><span class="d-v">{_contact.wechat}</span></div>{/if}
       {#if _contact.qq}<div class="d-row"><span class="d-l">{L('qq')}</span><span class="d-v">{_contact.qq}</span></div>{/if}
       {#if _contact.notes}<div class="d-row"><span class="d-l">{L('notes')}</span><span class="d-v">{_contact.notes}</span></div>{/if}
@@ -201,8 +239,33 @@
         {#if avatarErr}<p class="f-err">{avatarErr}</p>{/if}
       </div>
       <div class="fg"><label class="fl">{L('name')} *</label><input type="text" class="fi" bind:value={fName} /></div>
-      <div class="fg"><label class="fl">{L('phone')}</label><input type="text" class="fi" bind:value={fPhone} /></div>
-      <div class="fg"><label class="fl">{L('email')}</label><input type="email" class="fi" bind:value={fEmail} /></div>
+
+      <!-- Phones -->
+      <div class="fg"><label class="fl">{L('phone')}</label>
+        {#each fPhones as p, i}
+          <div class="multi-row">
+            <input type="text" class="fi" bind:value={fPhones[i]} placeholder="13800138000" />
+            {#if fPhones.length > 1}
+              <button class="btn-rm" on:click={()=>rmPhone(i)}>−</button>
+            {/if}
+          </div>
+        {/each}
+        <button class="btn-add-more" on:click={addPhone}>+ {L('phone')}</button>
+      </div>
+
+      <!-- Emails -->
+      <div class="fg"><label class="fl">{L('email')}</label>
+        {#each fEmails as e, i}
+          <div class="multi-row">
+            <input type="email" class="fi" bind:value={fEmails[i]} placeholder="name@example.com" />
+            {#if fEmails.length > 1}
+              <button class="btn-rm" on:click={()=>rmEmail(i)}>−</button>
+            {/if}
+          </div>
+        {/each}
+        <button class="btn-add-more" on:click={addEmail}>+ {L('email')}</button>
+      </div>
+
       <div class="fg"><label class="fl">{L('birthday')}</label><input type="date" class="fi" bind:value={fBirthday} /></div>
       <div class="fg"><label class="fl">{L('org')}</label><input type="text" class="fi" bind:value={fOrg} /></div>
       <div class="fg"><label class="fl">{L('address')}</label><input type="text" class="fi" bind:value={fAddr} /></div>
@@ -264,6 +327,9 @@
   .d-v.meta{font-size:11px;color:#bbb;}
   .d-gs{display:flex;gap:4px;flex-wrap:wrap;}
   .d-gt{font-size:11px;padding:1px 8px;border-radius:10px;background:#e8f0fe;color:#3575f0;}
+  .link{color:#3575f0;text-decoration:none;cursor:pointer;}
+  .link:hover{text-decoration:underline;}
+  .link.copied{color:#27ae60;}
   .f-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #e0e0e0;background:#f5f5f5;flex-shrink:0;}
   .f-title{flex:1;font-weight:600;}
   .f-cancel{padding:3px 10px;border:1px solid #ddd;border-radius:4px;cursor:pointer;font-size:12px;background:#fff;}
@@ -283,6 +349,13 @@
   .av-lab img{width:100%;height:100%;object-fit:cover;}
   .av-rm{width:20px;height:20px;border:none;border-radius:50%;background:#e74c3c;color:#fff;cursor:pointer;font-size:10px;}
   .f-hidden{display:none;}
+  .multi-row{display:flex;gap:4px;margin-bottom:4px;}
+  .btn-rm{width:28px;height:28px;border:1px solid #ddd;border-radius:4px;background:#fff;color:#e74c3c;cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .btn-rm:hover{background:#fce8e8;}
+  .btn-add-more{padding:3px 8px;border:1px dashed #ddd;border-radius:4px;background:transparent;color:#3575f0;cursor:pointer;font-size:11px;margin-top:2px;}
+  .btn-add-more:hover{background:#e8f0fe;border-color:#3575f0;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.3);animation:fadeIn .3s;}
+  @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
   .del-overlay{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;}
   .del-box{background:#fff;border-radius:8px;padding:20px;max-width:260px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,.2);}
   .del-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}

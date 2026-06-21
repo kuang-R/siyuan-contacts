@@ -1,15 +1,16 @@
-# siyuan-contacts (通讯录)
+# siyuan-contacts
 
-A [SiYuan Note](https://github.com/siyuan-note/siyuan) plugin that adds contact/address book functionality.
+A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plugin.
 
 ## Features
 
-- **Contact Management** — Add, edit, delete, and search contacts in a dedicated dock panel
-- **Rich Contact Fields** — Name, phone, email, birthday, address, organization, groups, avatar, website, WeChat, QQ, and notes
-- **Group Tags** — Organize contacts with custom group tags and filter by them
+- **Slide-out Panel** — Click the floating button (bottom-right) to open the contacts panel
+- **Rich Contact Fields** — Name, multiple phone numbers, multiple emails, birthday, address, organization, groups, avatar, website, WeChat, QQ, and notes
+- **Multi-Value Fields** — Add/remove phone numbers and email addresses individually with +/− buttons
+- **Group Tags** — Organize contacts with custom tags and filter by them
 - **@Mention Integration** — Type `@name` in any document to insert a link to a contact
 - **Slash Command** — Type `/add-contact` to quickly add a new contact
-- **Seamless Navigation** — Click on a contact reference to jump directly to the contact page
+- **Click to Copy** — Click a phone number to copy it to clipboard (with visual toast)
 - **Contact as Document** — Each contact is a native SiYuan document, enabling all built-in features (linking, referencing, search)
 
 ## Installation
@@ -26,17 +27,21 @@ Search for "siyuan-contacts" in the SiYuan marketplace.
 
 ## Usage
 
+### Opening the Panel
+
+Click the **blue floating button** (bottom-right corner) to slide out the contacts panel. Click the backdrop or press Escape to close it.
+
 ### Adding a Contact
 
-- Click the **+** button in the Contacts dock panel
+- Click the **+** button in the panel toolbar
 - Or use the keyboard shortcut **Ctrl+Shift+A**
 - Or type `/add-contact` in any document
 
-### Viewing & Editing
+### Managing Phone Numbers & Emails
 
-- Click any contact in the list to view details
-- Click **Edit** to modify contact information
-- Click **Delete** to remove a contact
+- In the edit form, each phone/email has its own input field
+- Click **+ Phone** / **+ Email** to add another field
+- Click the **−** button to remove a field
 
 ### Linking to Contacts
 
@@ -47,68 +52,54 @@ Search for "siyuan-contacts" in the SiYuan marketplace.
 
 ### Organizing with Groups
 
-- In the contact edit form, enter group tags separated by commas (e.g., `friends, work, family`)
-- Use the group filter bar at the top of the contacts panel to filter by group
+- In the edit form, enter group tags separated by commas (e.g., `friends, work, family`)
+- Use the group filter bar to filter by group
 
 ## Development
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Start dev build with watch mode
-pnpm run dev
-
-# Production build
-pnpm run build
+npm install          # Install dependencies
+npm run dev          # Dev build (watch mode)
+npm run build        # Production build → dist/index.js
+npm test             # Run unit tests
 ```
 
 ### Project Structure
 
 ```
 src/
-  index.ts              Plugin entry point
+  index.ts              Plugin entry point (DOM injection, FAB, panel)
   index.css             Global styles
   global.d.ts           Type declarations
   utils/
     api.ts              SiYuan API wrapper
-    constants.ts        Plugin constants
+    constants.ts        Plugin constants & attribute keys
     i18n.ts             Internationalization
     notebook.ts         Notebook management
     sql.ts              SQL query builders
     avatar.ts           Avatar utilities
   models/
-    contact.ts          Contact data model
+    contact.ts          Contact data model & form data
     attributeKeys.ts    IAL parser & attribute mapping
   stores/
     contactStore.ts     Svelte stores & CRUD actions
     uiStore.ts          UI state management
   components/
-    ContactPanel.svelte       Main dock panel
-    ContactToolbar.svelte     Search, sort, add
-    ContactList.svelte        Contact list
-    ContactListItem.svelte    Contact row
-    ContactDetail.svelte      Detail view
-    ContactForm.svelte        Add/edit form
-    ContactAvatar.svelte      Avatar display
-    GroupFilter.svelte        Group filter bar
-    GroupTag.svelte           Group tag badge
-    EmptyState.svelte         Empty placeholder
-    LoadingSpinner.svelte     Loading indicator
-    DeleteConfirmDialog.svelte Confirmation dialog
+    ContactPanel.svelte All-in-one UI component (list, detail, form, dialogs)
   editor/
     mentionPlugin.ts    @mention autocomplete
     slashCommand.ts     /add-contact slash command
-    linkPlugin.ts       Click handler & block icon menu
+    linkPlugin.ts       Click handler & context menu
+  tests/
+    ial.test.ts         IAL parser tests
+    utils.test.ts       Utility function tests
 ```
 
 ## Technical Design
 
-Each contact is stored as a SiYuan document in a dedicated "通讯录" notebook. Contact metadata (phone, email, groups, etc.) is stored as custom block attributes (`custom-contact-*`) on the document root block. This approach:
+Each contact is stored as a SiYuan document in a dedicated notebook. Metadata (phone, email, groups, etc.) is stored as custom block attributes (`custom-contact-*`) on the document root block, enabling native SiYuan search, linking, and free-form note-taking.
 
-- Enables full SiYuan search and reference linking
-- Keeps contact data queryable via SiYuan's SQL API
-- Allows users to freely add notes and content to contact documents
+The UI is built as a single Svelte component rendered into a DOM-injected slide-out overlay for maximum compatibility across desktop app, browser, and Docker deployments.
 
 ## License
 

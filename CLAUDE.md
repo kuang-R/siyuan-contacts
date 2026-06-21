@@ -6,7 +6,7 @@
 
 ```bash
 npm install          # 安装依赖
-npm run dev          # 开发模式（Vite watch，文件变更自动重构建）
+npm run dev          # 开发模式（Vite watch）
 npm run build        # 生产构建 → dist/index.js
 npm test             # 运行单元测试（vitest）
 ```
@@ -14,22 +14,18 @@ npm test             # 运行单元测试（vitest）
 ## Docker 部署
 
 ```bash
-# 一键安装/更新到 Docker 容器
-./scripts/deploy-docker.sh --container siyuan-note --restart
-
-# 开发模式（自动监听变更并部署）
-./scripts/dev-docker.sh --container siyuan-note
+./scripts/deploy-docker.sh --container siyuan-note
+./scripts/dev-docker.sh --container siyuan-note   # watch 模式
 ```
 
-容器内插件目录结构（注意 `index.js` 在根目录，不在 `dist/` 子目录）：
+容器内插件目录结构（`index.js` 在根目录，不在 `dist/` 子目录）：
 ```
 /siyuan/workspace/data/plugins/siyuan-contacts/
 ├── index.js          # ← 思源加载此文件
 ├── plugin.json
 ├── icon.png
 ├── preview.png
-├── README.md
-├── README_zh_CN.md
+├── README.md / README_zh_CN.md
 └── i18n/
     ├── zh_CN.json
     └── en_US.json
@@ -37,28 +33,58 @@ npm test             # 运行单元测试（vitest）
 
 ## 架构
 
-### 构建格式：必须用 CommonJS
+### 构建格式：IIFE + module.exports footer
 
-**这是最容易出错的地方。** 思源通过 `eval()` 加载插件 JS，内部使用 `new Function('module', 'exports', 'require', code)` 包裹代码。因此：
+思源通过 `new Function('module', 'exports', 'require', code)` 加载插件。**必须用 IIFE 格式**，末尾加 `module.exports = siyuanContacts;`：
 
-- **格式必须是 `cjs`（CommonJS）**。输出末尾为 `module.exports = ContactsPlugin;`
-- **不能用 `iife`**（无 `module.exports`，思源报 `has no export`）
-- **不能用 `es`**（`export` 在 `eval` 中语法错误）
-- CSS 通过 `vite-plugin-css-injected-by-js` 内联到 JS 中
+- `vite.config.ts`: `formats: ['iife']`，`footer: 'module.exports = siyuanContacts;'`
+- **不能用 CJS**——Rollup 会重命名 Svelte 组件引用导致 `ReferenceError`
+- **不能用 ES**——`export` 在 `eval()` 中语法错误
+- CSS 通过 `vite-plugin-css-injected-by-js` 注入 `<style>`
 
-### 插件入口：必须 extends Plugin
+### 插件入口
 
 ```ts
-// ✅ 正确：运行时继承
-import { Plugin } from 'siyuan';
-export default class ContactsPlugin extends Plugin { ... }
-
-// ❌ 错误：仅类型实现
-import type { Plugin } from 'siyuan';
-export default class ContactsPlugin implements Plugin { ... }
+// index.ts — Plugin 从 eval 上下文的 require 获取
+declare const require: any;
+const _siyuanModule = typeof require !== 'undefined' ? require('siyuan') : window.siyuan;
+const Plugin = _siyuanModule?.Plugin || window.Plugin;
+if (!Plugin) throw new Error('...');
 ```
 
-`import { Plugin }` 是运行时导入，构建后变为 `require("siyuan")`。`Plugin` 基类提供 `addDock`、`addCommand`、`eventBus` 等方法。**不能用 `import type`**——那会被 TypeScript 剥离，导致思源报 `does not extends Plugin`。
+- `siyuan` 全局对象没有 `.Plugin`，只有通过 `require('siyuan')` 才能拿到
+- 加 `throw` 做明确报错，不用静默降级
+
+### UI：DOM 注入（浮动按钮 + 侧滑面板）
+
+不使用 SiYuan 的 Dock/Tab API（浏览器模式下不可靠）。直接注入 DOM：
+
+- `index.ts` 创建三个 DOM 元素：`#siyuan-contacts-backdrop`（遮罩）、`#siyuan-contacts-panel`（面板）、`#siyuan-contacts-fab`（浮动按钮）
+- Svelte 组件渲染到 `#siyuan-contacts-panel` 中
+- 点击 FAB toggle 面板，点击遮罩关闭
+
+### Svelte：单文件组件 + 手动订阅
+
+**所有 UI 在一个 `ContactPanel.svelte` 中**，不导入任何子组件（Rollup 会树摇掉 Svelte 子组件导入）。模板中避免：
+
+- ❌ `$store` 自动订阅——Rollup IIFE 下 CJS 会重命名 store 变量导致 ReferenceError
+- ❌ 直接调用导入的函数（如 `t()`）——同样会被重命名
+- ❌ 模板中的 TypeScript 类型断言（`as Type`、`: Type`）——Svelte 4 解析器不兼容
+
+✅ 正确做法：
+```svelte
+<script>
+  import { t } from '../utils/i18n';
+  function L(key) { return t(key); }  // 模板调用 L()，避免引用被改名
+  // 手动订阅 store
+  onMount(() => { unsubs.push(store.subscribe(v => localVar = v)); });
+</script>
+<p>{L('loading')}</p>  <!-- ✅ 调用局部函数 -->
+```
+
+### 数据模型
+
+联系人存储为独立思源文档，元数据（`custom-contact-*`）在文档根块属性中。电话和邮箱以逗号分隔字符串存储，表单中使用数组 `fPhones`/`fEmails`（`parseMulti`/`joinMulti` 互转）。详情页拆分显示为独立链接（tel:/mailto:），点击号码复制到剪贴板。
 
 ### plugin.json 兼容性
 
@@ -69,71 +95,26 @@ export default class ContactsPlugin implements Plugin { ... }
 }
 ```
 
-- **`backends` 必须包含 `docker`**——Docker 部署的后端标识是 `docker`，不是 `linux`
-- **`frontends` 至少包含 `browser-desktop`**——浏览器访问需要；`desktop` 是桌面应用
-
-### 插件生命周期 (`src/index.ts`)
-
-`ContactsPlugin extends Plugin`。`onload()` 执行顺序：
-
-1. 检测语言 → 注册 SVG 图标
-2. 创建 `ContactsApi` 实例
-3. `ensureContactsNotebook()` —— 查找或创建"通讯录"笔记本（**如果失败则 return 退出，dock 不会注册**）
-4. 初始化 Svelte stores → `addDock()` 注册面板 → 注册命令和编辑器扩展
-5. `loadAllContacts()` 加载联系人列表
-
-### 数据模型：一个联系人 = 一个思源文档
-
-联系人存储为"通讯录"笔记本下的思源文档。字段（电话、邮箱等）存储在文档根块的**自定义块属性**（`custom-contact-*`）中。文档 markdown 正文仅 `# {姓名}`。
-
-优势：支持思源原生 SQL 搜索、`siyuan://blocks/<id>` 跳转、用户可自由添加笔记。
-
-### IAL 解析 (`src/models/attributeKeys.ts`)
-
-思源块属性存储格式为 **IAL**：`{: key1="value1" key2=value2}`。`parseIAL()` 用正则解析，处理引号和非引号值。单个读取优先用 `api.getBlockAttrs(id)` 返回 JSON，批量查询走 SQL + IAL 解析路径。
-
-### API 层 (`src/utils/api.ts`)
-
-`ContactsApi` 封装 `@siyuan-community/siyuan-sdk` Client，调用思源 HTTP API（浏览器同源）。关键方法：`createDocWithMd`、`setBlockAttrs`、`getBlockAttrs`、`sqlQuery`、`removeDoc`。
-
-### 状态管理 (`src/stores/`)
-
-两个 Svelte store 模块：
-
-- **`contactStore.ts`**：`contacts`、`isLoading`、`sortMode`、`searchText`、`selectedGroup`（writable）；`filteredContacts`、`allGroups`（derived）。CRUD 操作和搜索辅助函数。使用前需 `initContactStore(api, notebookId)`。
-- **`uiStore.ts`**：`selectedContactId`、`panelView`（`'list' | 'detail' | 'add-form' | 'edit-form'`）、`showDeleteConfirm`。导航辅助函数。
-
-所有跨组件通信通过 stores，不使用 Svelte context 或事件派发。
-
-### 编辑器集成 (`src/editor/`)
-
-1. **`mentionPlugin.ts`** — 监听 `loaded-protyle-dynamic`，向 `protyle.hint.extend` 注入 `@` 触发器。选中后插入 `[姓名](siyuan://blocks/ID)` 块引用链接。
-2. **`slashCommand.ts`** — 注册 `/add-contact` 及中文别名到 `protyleSlash`。
-3. **`linkPlugin.ts`** — 监听 `click-blockicon` 和 `open-siyuan-url-block`，为联系人文档添加右键菜单。
-
-### Svelte 组件树
+### 项目结构
 
 ```
-ContactPanel（dock 根组件）
-├── ContactToolbar（搜索、排序、+ 按钮）
-├── GroupFilter（水平可滚动标签筛选栏）
-├── ContactList → ContactListItem* → ContactAvatar, GroupTag
-├── ContactDetail（详情视图，编辑/删除按钮）
-├── ContactForm（添加/编辑表单，头像上传）
-└── DeleteConfirmDialog（模态覆盖层）
+src/
+  index.ts              # 插件入口：DOM 注入、FAB、面板开关
+  index.css             # 全局样式
+  utils/                # API、SQL、i18n、notebook、avatar
+  models/               # Contact 接口、IAL 解析
+  stores/               # Svelte stores（contactStore、uiStore）
+  components/
+    ContactPanel.svelte # 唯一 UI 组件（列表/详情/表单/对话框）
+  editor/               # @mention、slashCommand、linkPlugin
+tests/                  # IAL 解析、工具函数测试
 ```
 
-### Vite 构建 (`vite.config.ts`)
+### 关键约定
 
-- **格式 `cjs`**（CommonJS），输出 `dist/index.js`
-- `siyuan` 外部化，运行时 `require("siyuan")` 由思源提供
-- `vite-plugin-css-injected-by-js` 将 CSS 内联为 `<style>` 标签
-
-## 关键约定
-
-- 块属性键前缀 `custom-contact-`（如 `custom-contact-phone`）
-- 分组标签为逗号分隔字符串，与 `string[]` 互转
-- 头像为 base64 data URI，限制 64KB
+- 块属性前缀 `custom-contact-`
+- 电话/邮箱存储为逗号分隔字符串，表单用数组+增删按钮
+- 头像 base64 data URI，限制 64KB
 - 搜索为客户端过滤，不每次请求服务端
-- IAL 解析是批量查询回退方案；单条读取优先用 `getBlockAttrs`
 - 语言检测：`window.siyuan.config.lang`，默认 `zh_CN`
+- i18n 模板调用：`L('key')` 而非 `t('key')`（避免 Rollup 改名）

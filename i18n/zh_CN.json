@@ -41,5 +41,6 @@
   "contactDeleted": "联系人已删除",
   "loading": "加载中...",
   "errorLoading": "加载联系人失败",
-  "noGroup": "未分组"
+  "noGroup": "未分组",
+  "copied": "已复制"
 }

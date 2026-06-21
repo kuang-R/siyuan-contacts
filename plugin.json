@@ -13,7 +13,7 @@
   },
   "description": {
     "en_US": "Contact management plugin. Add contacts with phone, email, birthday, groups and more. Type @name in the editor to insert a link to a contact, or use /add-contact slash command.",
-    "zh_CN": "通讯录管理插件。添加联系人（电话、邮箱、生日、分组等），在编辑器输入@名字自动插入联系人链接，支持 /add-contact 斜杠命令。",
+    "zh_CN": "通讯录管理插件。支持多号码、多邮箱、分组标签。输入@名字自动插入链接，/add-contact 快速添加，点击号码复制到剪贴板。",
     "default": "Contact management plugin. Add contacts with phone, email, birthday, groups and more. Type @name in the editor to link to a contact."
   },
   "readme": {
