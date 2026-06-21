@@ -87,10 +87,11 @@ export default class ContactsPlugin extends Plugin {
   }
 
   private createBackdrop(): void {
+    const topBarH = this.getTopBarHeight();
     const el = document.createElement('div');
     el.id = `${PLUGIN_NAME}-backdrop`;
     el.style.cssText = `
-      position: fixed; inset: 0; z-index: 10000;
+      position: fixed; top: ${topBarH}px; right: 0; bottom: 0; left: 0; z-index: 10000;
       background: rgba(0,0,0,.3); opacity: 0; pointer-events: none;
       transition: opacity 0.3s;
     `;
@@ -100,11 +101,12 @@ export default class ContactsPlugin extends Plugin {
   }
 
   private createPanel(): void {
+    const topBarH = this.getTopBarHeight();
     const el = document.createElement('div');
     el.id = `${PLUGIN_NAME}-panel`;
     el.classList.add('siyuan-contacts');
     el.style.cssText = `
-      position: fixed; top: 0; right: 0; bottom: 0; z-index: 10001;
+      position: fixed; top: ${topBarH}px; right: 0; bottom: 0; z-index: 10001;
       width: 360px; max-width: 90vw;
       background: var(--b3-theme-background, #fff);
       box-shadow: -4px 0 24px rgba(0,0,0,.15);
@@ -169,6 +171,10 @@ export default class ContactsPlugin extends Plugin {
 
   private openPanel(): void {
     if (!this.panelEl || !this.backdropEl) return;
+    // Re-read top bar height (DOM may not have been ready during onload)
+    const topBarH = this.getTopBarHeight();
+    this.panelEl.style.top = `${topBarH}px`;
+    this.backdropEl.style.top = `${topBarH}px`;
     this.panelEl.style.transform = 'translateX(0)';
     this.backdropEl.style.opacity = '1';
     this.backdropEl.style.pointerEvents = 'auto';
@@ -185,6 +191,20 @@ export default class ContactsPlugin extends Plugin {
 
   private isPanelOpen(): boolean {
     return this.panelEl?.style.transform === 'translateX(0px)';
+  }
+
+  /** Read the actual SiYuan top bar bottom edge so panel aligns flush below it */
+  private getTopBarHeight(): number {
+    // Try known SiYuan toolbar selectors, use the bottom edge as offset
+    const el = document.getElementById('toolbar')
+      || document.getElementById('barTop')
+      || document.querySelector('.toolbar');
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      // bottom = distance from viewport top to toolbar bottom edge
+      if (rect.bottom > 0) return rect.bottom;
+    }
+    return 45; // fallback
   }
 
   // ========================================================================
@@ -213,7 +233,7 @@ export default class ContactsPlugin extends Plugin {
     this.addTopBar?.({
       icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
       title: L('pluginName'),
-      callback: () => this.openPanel(),
+      callback: () => this.togglePanel(),
     });
 
     // Hotkey command — quick add contact
