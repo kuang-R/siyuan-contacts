@@ -79,7 +79,7 @@ export default class ContactsPlugin extends Plugin {
       const stored = localStorage.getItem('siyuan-contacts-showFab');
       if (stored === 'false') return false;
     } catch { /* ignore */ }
-    return true; // default: visible
+    return false; // default: hidden
   }
 
   private set showFabSetting(v: boolean) {
