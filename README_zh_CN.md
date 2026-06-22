@@ -37,6 +37,8 @@
 
 ## 使用方法
 
+<img src="https://raw.githubusercontent.com/kuang-R/siyuan-contacts/main/assets/usage.png" alt="使用截图" width="800">
+
 ### 打开面板
 
 - 点击右上角插件栏的**联系人图标**

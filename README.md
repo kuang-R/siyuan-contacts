@@ -39,6 +39,8 @@ Search for "siyuan-contacts" in the SiYuan marketplace.
 
 ## Usage
 
+<img src="https://raw.githubusercontent.com/kuang-R/siyuan-contacts/main/assets/usage.png" alt="Usage screenshot" width="800">
+
 ### Opening the Panel
 
 - Click the **contacts icon** in the top bar (right side of the SiYuan toolbar)
