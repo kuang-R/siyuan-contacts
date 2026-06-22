@@ -258,17 +258,24 @@ export class ContactsApi {
       const query = buildBacklinksQuery(blockId);
       const rows = await this.sqlQuery(query);
       if (rows.length > 0) {
-        // Enrich with document titles from blocks table
+        // Enrich with document titles and paths from blocks table
         const rootIds = [...new Set(rows.map((r: any) => r.root_id || r.id))].filter(Boolean);
-        const titles = await this.resolveDocTitles(rootIds);
-        return rows.map((r: any) => ({
-          id: r.id || r.root_id || '',
-          blockID: r.blockID || r.block_id || '',
-          content: r.content || '',
-          title: titles[r.id || r.root_id] || '',
-          hPath: '',
-          box: '',
-        }));
+        const docInfo = await this.resolveDocInfo(rootIds);
+        // Fetch referencing block content for meaningful snippets
+        const blockIds = [...new Set(rows.map((r: any) => r.blockID || r.block_id).filter(Boolean))];
+        const blockContent = await this.resolveBlockContent(blockIds);
+        return rows.map((r: any) => {
+          const docId = r.id || r.root_id || '';
+          const bkId = r.blockID || r.block_id || '';
+          return {
+            id: docId,
+            blockID: bkId,
+            content: blockContent[bkId] || r.content || '',
+            title: docInfo[docId]?.title || '',
+            hPath: docInfo[docId]?.hPath || '',
+            box: '',
+          };
+        });
       }
     } catch (err) {
       console.warn('[siyuan-contacts] SQL backlinks query failed, trying API fallback:', err);
@@ -291,13 +298,37 @@ export class ContactsApi {
   }
 
   /**
-   * Resolve document block IDs to their titles via SQL.
+   * Resolve document block IDs to their titles and paths via SQL.
    */
-  private async resolveDocTitles(ids: string[]): Promise<Record<string, string>> {
+  private async resolveDocInfo(ids: string[]): Promise<Record<string, { title: string; hPath: string }>> {
     try {
+      if (ids.length === 0) return {};
       const idList = ids.map(id => `'${id.replace(/'/g, "''")}'`).join(',');
       const rows = await this.sqlQuery(
-        `SELECT id, content FROM blocks WHERE id IN (${idList}) AND type = 'd'`
+        `SELECT id, name, content, hpath FROM blocks WHERE id IN (${idList}) AND type = 'd'`
+      );
+      const map: Record<string, { title: string; hPath: string }> = {};
+      for (const row of rows) {
+        map[row.id] = {
+          title: row.name || row.content || '',
+          hPath: row.hpath || '',
+        };
+      }
+      return map;
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Resolve block IDs to their text content (for backlink snippets).
+   */
+  private async resolveBlockContent(ids: string[]): Promise<Record<string, string>> {
+    try {
+      if (ids.length === 0) return {};
+      const idList = ids.map(id => `'${id.replace(/'/g, "''")}'`).join(',');
+      const rows = await this.sqlQuery(
+        `SELECT id, content FROM blocks WHERE id IN (${idList})`
       );
       const map: Record<string, string> = {};
       for (const row of rows) {

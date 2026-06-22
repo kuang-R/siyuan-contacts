@@ -163,3 +163,7 @@ tests/                  # IAL 解析、工具函数测试
 - **反链实现**：用 SQL 查询 `refs` 表（`def_block_root_id = 联系人块ID`）获取引用文档和引用块 ID。不要用 `/api/ref/getBackmentionDoc`（该 API 在 Docker/桌面模式下存在但返回空）
 - **`openTab` 导航**：`openTab` 在 `require('siyuan')` 返回的模块上（与 `Plugin` 同级），不在 Plugin 实例上。用法：`_siyuanModule.openTab({ doc: { id: blockId } })`。注意：**先 `this.closePanel()` 再跳转**，否则面板遮住文档看不到效果
 - **滚动到引用块**：`openTab` 传文档根块 ID 打开完整文档，但不会自动滚动到引用位置。需用 `document.querySelector('[data-node-id="块ID"]')` + `scrollIntoView()` 手动滚动，并用多次 `setTimeout`（300/800/1500ms）等待 Protyle 异步渲染。查询需限定在 `.layout__wnd--active` 内，避免匹配到反链面板等背景区域的同 ID 块。传 `blockId` 前需判空，避免无意义 scroll
+- **联系人内联编辑**：详情页添加 `_editing` 状态，默认只读（显示「编辑」「删除」），点击「编辑」后字段变为输入框（显示「保存」「取消」），保存调 `updateContact` 后 `viewContact` 刷新。反链区域只在只读模式下显示。新建联系人仍用独立 `add-form`
+- **反链标题内联编辑**：每个反链条目悬停显示 ✏️ 按钮，点击后标题变输入框（`tick().then(focus)` 自动聚焦），Enter/失焦保存。标题按 `blockID`（非文档 ID）作为 localStorage key 独立存储，**不修改源文档**。列表加载时从 `siyuan-contacts-bl-titles` 恢复自定义标题
+- **反链 snippet**：用 `resolveBlockContent()` 查引用块在 `blocks` 表中的完整文本内容，而非 `refs` 表中仅存的人名。`refs.content` 作为回退
+- **面板重开刷新反链**：`openPanel()` 设 `panelOpenAt: Date.now()` → Svelte `$:` 检测变化触发 `loadBacklinks` 重新查询数据库

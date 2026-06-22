@@ -133,24 +133,26 @@ export default class ContactsPlugin extends Plugin {
         notebookId: this.notebookId,
         showFab: this.showFabSetting,
         onToggleFab: () => this.toggleFab(),
-        onOpenDoc: (blockId: string, docId: string) => {
+        onOpenDoc: (blockId: string, docId: string, editMode?: boolean) => {
           this.closePanel();
           try {
             if (_siyuanModule?.openTab) {
               _siyuanModule.openTab({ doc: { id: docId } });
-              // Manual scroll: openTab opens the document at the top.
-              // Retry finding the block element as Protyle renders async.
               if (blockId) {
                 const attempts = [300, 800, 1500];
                 for (const delay of attempts) {
                   setTimeout(() => {
-                    // Scope to active editor to avoid matching blocks in
-                    // background panes (backlinks, outline, etc.)
                     const layout = document.querySelector('.layout__wnd--active');
                     const root = layout || document;
                     const el = root.querySelector(`[data-node-id="${blockId}"]`);
                     if (el) {
                       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      // Enter edit mode: double-click the block to activate Protyle editor
+                      if (editMode) {
+                        setTimeout(() => {
+                          el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+                        }, 100);
+                      }
                     }
                   }, delay);
                 }
@@ -216,6 +218,10 @@ export default class ContactsPlugin extends Plugin {
     if (this.fabBtn) this.fabBtn.style.opacity = '0.3';
     // Auto-refresh contacts on every open
     loadAllContacts();
+    // Trigger backlink reload if viewing a contact detail
+    if (this.panelComponent) {
+      this.panelComponent.$set({ panelOpenAt: Date.now() });
+    }
   }
 
   private closePanel(): void {
