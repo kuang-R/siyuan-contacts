@@ -2,7 +2,7 @@
   "name": "siyuan-contacts",
   "author": "ruan",
   "url": "https://github.com/kuang-R/siyuan-contacts",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "minAppVersion": "2.9.0",
   "backends": ["windows", "linux", "darwin", "docker"],
   "frontends": ["desktop", "desktop-window", "browser-desktop"],
