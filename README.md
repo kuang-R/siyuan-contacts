@@ -33,7 +33,7 @@ Search for "siyuan-contacts" in the SiYuan marketplace.
 
 ### Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/ruan/siyuan-contacts/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/kuang-R/siyuan-contacts/releases)
 2. Copy the plugin folder to your SiYuan `data/plugins/` directory
 3. Restart SiYuan or reload plugins
 

@@ -31,7 +31,7 @@
 
 ### 手动安装
 
-1. 从 [GitHub Releases](https://github.com/ruan/siyuan-contacts/releases) 下载
+1. 从 [GitHub Releases](https://github.com/kuang-R/siyuan-contacts/releases) 下载
 2. 解压到思源 `data/plugins/` 目录
 3. 重启思源或刷新插件
 
