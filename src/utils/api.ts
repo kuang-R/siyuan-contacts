@@ -7,6 +7,7 @@
 
 import { Client } from '@siyuan-community/siyuan-sdk';
 import type { AttrRecord } from '../models/attributeKeys';
+import { buildBacklinksQuery } from './sql';
 
 export interface NotebookInfo {
   id: string;
@@ -39,6 +40,21 @@ export interface SearchResult {
 
 export interface SqlRow {
   [key: string]: any;
+}
+
+export interface BacklinkItem {
+  /** Document block ID that contains the reference */
+  id: string;
+  /** Document title */
+  title?: string;
+  /** Human-readable path */
+  hPath?: string;
+  /** Notebook ID (box) */
+  box?: string;
+  /** Snippet of the referencing content */
+  content?: string;
+  /** Specific block ID within the document that contains the reference */
+  blockID?: string;
 }
 
 export class ContactsApi {
@@ -222,6 +238,75 @@ export class ContactsApi {
       paths: [notebookId],
     });
     return (res?.data ?? []) as SearchResult[];
+  }
+
+  // ==========================================================================
+  // Reference / Backlink Operations
+  // ==========================================================================
+
+  /**
+   * Get documents that backlink to (reference) a given block.
+   * Uses SQL query on the refs table as primary method,
+   * falls back to /api/ref/getBackmentionDoc.
+   *
+   * @param blockId - The block ID to find backlinks for (contact document root block)
+   * @returns Array of backlink items, empty array on failure or no results
+   */
+  async getBacklinks(blockId: string): Promise<BacklinkItem[]> {
+    // Primary: SQL query on refs table
+    try {
+      const query = buildBacklinksQuery(blockId);
+      const rows = await this.sqlQuery(query);
+      if (rows.length > 0) {
+        // Enrich with document titles from blocks table
+        const rootIds = [...new Set(rows.map((r: any) => r.root_id || r.id))].filter(Boolean);
+        const titles = await this.resolveDocTitles(rootIds);
+        return rows.map((r: any) => ({
+          id: r.id || r.root_id || '',
+          blockID: r.blockID || r.block_id || '',
+          content: r.content || '',
+          title: titles[r.id || r.root_id] || '',
+          hPath: '',
+          box: '',
+        }));
+      }
+    } catch (err) {
+      console.warn('[siyuan-contacts] SQL backlinks query failed, trying API fallback:', err);
+    }
+
+    // Fallback: API call
+    try {
+      const response = await this.client._axios.post('/api/ref/getBackmentionDoc', {
+        id: blockId,
+      });
+      if (response?.data?.code === 0 && Array.isArray(response.data.data)) {
+        return response.data.data as BacklinkItem[];
+      }
+      console.warn('[siyuan-contacts] Backlink API returned unexpected format:', response?.data);
+    } catch (err) {
+      console.warn('[siyuan-contacts] Backlink API call failed:', err);
+    }
+
+    return [];
+  }
+
+  /**
+   * Resolve document block IDs to their titles via SQL.
+   */
+  private async resolveDocTitles(ids: string[]): Promise<Record<string, string>> {
+    try {
+      const idList = ids.map(id => `'${id.replace(/'/g, "''")}'`).join(',');
+      const rows = await this.sqlQuery(
+        `SELECT id, content FROM blocks WHERE id IN (${idList}) AND type = 'd'`
+      );
+      const map: Record<string, string> = {};
+      for (const row of rows) {
+        map[row.id] = row.content || '';
+      }
+      return map;
+    } catch {
+      return {};
+    }
   }
 
   // ==========================================================================

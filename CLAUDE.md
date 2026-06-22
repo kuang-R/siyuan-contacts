@@ -5,7 +5,7 @@
 ## TODO
 
 1. **避免 `/` 菜单联系人过多** — 思源 `String.includes('')` 导致空输入匹配所有条目，无法在插件层面绕过。可能的方案：向思源提交 PR 修改过滤逻辑（空输入不匹配）；或思源支持 `minimumFilterLength` 配置；或改用原生 `@` 触发（需安全操作 Protyle 数据模型）
-2. **联系人页面包含引用视图** — 联系人详情中展示"谁引用了此联系人"（类似思源反链面板），利用 `/api/ref/getBackmentionDoc` 等 API
+2. ~~**联系人页面包含引用视图**~~ ✅ 已实现 — 详情页底部展示反链引用列表（SQL 查询 `refs` 表 + `openTab` 跳转 + 手动滚动定位）
 
 ## 构建与开发
 
@@ -58,6 +58,7 @@ if (!Plugin) throw new Error('...');
 ```
 
 - `siyuan` 全局对象没有 `.Plugin`，只有通过 `require('siyuan')` 才能拿到
+- `_siyuanModule` 保留引用，后续可用 `_siyuanModule.openTab()` 等 API（`openTab` 与 `Plugin` 同级）
 - 加 `throw` 做明确报错，不用静默降级
 
 ### UI：DOM 注入（浮动按钮 + 顶部栏 + 侧滑面板）
@@ -159,3 +160,6 @@ tests/                  # IAL 解析、工具函数测试
 - **孤儿块过滤**：`loadAllContacts()` 用 `listDocsByPath` 获取实际存在的文档 ID 集合，与 SQL 查出的联系人交叉比对，过滤已删除的孤儿块
 - **自动刷新**：每次 `openPanel()` 调 `loadAllContacts()`，确保手动删除后打开面板即时反映
 - **只读保护恢复**：`ensureContactsReadonly()` 每次启动用一次 SQL（`WHERE ial NOT LIKE '%custom-sy-readonly%'`）找出缺失只读标记的联系人并补上，防止手动删除/恢复后属性丢失
+- **反链实现**：用 SQL 查询 `refs` 表（`def_block_root_id = 联系人块ID`）获取引用文档和引用块 ID。不要用 `/api/ref/getBackmentionDoc`（该 API 在 Docker/桌面模式下存在但返回空）
+- **`openTab` 导航**：`openTab` 在 `require('siyuan')` 返回的模块上（与 `Plugin` 同级），不在 Plugin 实例上。用法：`_siyuanModule.openTab({ doc: { id: blockId } })`。注意：**先 `this.closePanel()` 再跳转**，否则面板遮住文档看不到效果
+- **滚动到引用块**：`openTab` 传文档根块 ID 打开完整文档，但不会自动滚动到引用位置。需用 `document.querySelector('[data-node-id="块ID"]')` + `scrollIntoView()` 手动滚动，并用多次 `setTimeout`（300/800/1500ms）等待 Protyle 异步渲染。查询需限定在 `.layout__wnd--active` 内，避免匹配到反链面板等背景区域的同 ID 块。传 `blockId` 前需判空，避免无意义 scroll

@@ -79,6 +79,24 @@ export function buildListGroupsQuery(notebookId: string): string {
 }
 
 /**
+ * Build a SQL query to find documents that backlink to a given block.
+ *
+ * SiYuan's refs table tracks block references:
+ *   def_block_root_id — root document ID of the referenced block
+ *   root_id           — root document ID of the block containing the reference
+ *   content           — reference text
+ *   block_id          — the specific block containing the reference
+ */
+export function buildBacklinksQuery(defBlockId: string): string {
+  return `
+    SELECT DISTINCT r.root_id AS id, r.content, r.block_id AS blockID, r.root_id
+    FROM refs r
+    WHERE r.def_block_root_id = '${escapeSql(defBlockId)}'
+      AND r.root_id != '${escapeSql(defBlockId)}'
+  `;
+}
+
+/**
  * Escape a string value for safe use in SQL.
  * Simple escaping: double up single quotes.
  */

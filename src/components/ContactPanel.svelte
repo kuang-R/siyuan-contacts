@@ -17,6 +17,7 @@
   export let notebookId: string | null = null;
   export let showFab = true;
   export let onToggleFab: () => void = () => {};
+  export let onOpenDoc: (blockId: string, docId: string) => void = () => {};
 
   function L(key: string): string { return t(key); }
 
@@ -32,6 +33,10 @@
     fBirthday = '', fAddr = '', fOrg = '', fNotes = '', fGroups = '',
     fAvatar = '', fWeb = '', fWx = '', fQq = '';
   let avatarPrev = '', avatarErr = '';
+
+  // Backlinks state
+  let _backlinks: any[] = [];
+  let _backlinksLoading = false;
 
   const unsubs: Array<()=>void> = [];
 
@@ -81,6 +86,23 @@
   $: if (_view === 'edit-form' && _contact) initForm(_contact);
   $: if (_view === 'add-form' && !_contact) initForm(null);
 
+  // Load backlinks when viewing a contact detail
+  $: if (_view === 'detail' && _cid) {
+    loadBacklinks(_cid);
+  }
+
+  async function loadBacklinks(contactId: string) {
+    _backlinksLoading = true;
+    _backlinks = [];
+    try {
+      _backlinks = await api.getBacklinks(contactId) || [];
+    } catch (e) {
+      console.error('Failed to load backlinks:', e);
+    } finally {
+      _backlinksLoading = false;
+    }
+  }
+
   function getBrief(c: any): string {
     const parts = [c.phone, c.email, c.org].filter(Boolean).map(p => String(p).split(',')[0].trim());
     return parts.slice(0,2).join(' · ') || ' ';
@@ -117,10 +139,6 @@
     // Just dismiss — user manually deletes the .sy doc from file tree
     cancelDelete();
     backToList();
-  }
-
-  function openSiYuan(id: string) {
-    try { window.siyuan?.ws?.send({ type:'openTab', data:{ doc:{ id } } }); } catch {}
   }
 
   let copiedNum = '';
@@ -269,6 +287,25 @@
       {#if _contact.groups.length > 0}<div class="d-row"><span class="d-l">{L('groups')}</span><span class="d-v d-gs">{#each _contact.groups as g}<span class="d-gt">{g}</span>{/each}</span></div>{/if}
       {#if _contact.created}<div class="d-row"><span class="d-l">{L('created')}</span><span class="d-v meta">{_contact.created.slice(0,10)}</span></div>{/if}
       {#if _contact.updated}<div class="d-row"><span class="d-l">{L('updated')}</span><span class="d-v meta">{_contact.updated.slice(0,10)}</span></div>{/if}
+
+      <!-- Backlinks Section -->
+      <div class="bl-section">
+        <div class="bl-header">{L('backlinks')}</div>
+        {#if _backlinksLoading}
+          <div class="bl-status">{L('loadingBacklinks')}</div>
+        {:else if _backlinks.length === 0}
+          <div class="bl-status">{L('noBacklinks')}</div>
+        {:else}
+          {#each _backlinks as bl}
+            <div class="bl-item" on:click={() => onOpenDoc(bl.blockID || bl.id, bl.id)}>
+              <div class="bl-title">{bl.title || bl.hPath || bl.id}</div>
+              {#if bl.content}
+                <div class="bl-snippet">{bl.content}</div>
+              {/if}
+            </div>
+          {/each}
+        {/if}
+      </div>
     </div>
 
   {:else if _view === 'add-form' || _view === 'edit-form'}
@@ -412,4 +449,15 @@
   .del-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
   .del-btns button{padding:6px 14px;border:1px solid #ddd;border-radius:4px;cursor:pointer;font-size:13px;background:#fff;}
   .del-ok{background:#e74c3c!important;color:#fff;border-color:#e74c3c!important;}
+
+  /* Backlinks section */
+  .bl-section{margin-top:16px;padding-top:12px;border-top:1px solid #e0e0e0;}
+  .bl-header{font-size:11px;font-weight:600;color:#999;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
+  .bl-status{font-size:12px;color:#bbb;padding:4px 0;}
+  .bl-item{padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;}
+  .bl-item:hover{background:rgba(0,0,0,.02);}
+  .bl-item:last-child{border-bottom:none;}
+  .bl-title{font-size:13px;color:#3575f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bl-title:hover{text-decoration:underline;}
+  .bl-snippet{font-size:11px;color:#888;margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 </style>

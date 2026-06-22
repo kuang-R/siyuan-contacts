@@ -51,5 +51,8 @@
   "settingShowFab": "Show floating button",
   "settingShowFabDesc": "When disabled, use the top bar icon or keyboard shortcut to open contacts",
   "fabShown": "Floating button shown",
-  "fabHidden": "Floating button hidden"
+  "fabHidden": "Floating button hidden",
+  "backlinks": "References",
+  "noBacklinks": "No documents reference this contact",
+  "loadingBacklinks": "Loading references..."
 }

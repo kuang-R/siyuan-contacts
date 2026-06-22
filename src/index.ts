@@ -133,6 +133,31 @@ export default class ContactsPlugin extends Plugin {
         notebookId: this.notebookId,
         showFab: this.showFabSetting,
         onToggleFab: () => this.toggleFab(),
+        onOpenDoc: (blockId: string, docId: string) => {
+          this.closePanel();
+          try {
+            if (_siyuanModule?.openTab) {
+              _siyuanModule.openTab({ doc: { id: docId } });
+              // Manual scroll: openTab opens the document at the top.
+              // Retry finding the block element as Protyle renders async.
+              if (blockId) {
+                const attempts = [300, 800, 1500];
+                for (const delay of attempts) {
+                  setTimeout(() => {
+                    // Scope to active editor to avoid matching blocks in
+                    // background panes (backlinks, outline, etc.)
+                    const layout = document.querySelector('.layout__wnd--active');
+                    const root = layout || document;
+                    const el = root.querySelector(`[data-node-id="${blockId}"]`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }, delay);
+                }
+              }
+            }
+          } catch { /* ignore */ }
+        },
       },
     });
   }
