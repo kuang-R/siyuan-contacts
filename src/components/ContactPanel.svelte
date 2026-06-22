@@ -161,9 +161,15 @@
   function goDel() { openDeleteConfirm(); }
   function cancelDel() { cancelDelete(); }
 
+  // Name input ref for auto-focus
+  let _nameInputEl: HTMLInputElement;
+
   // Inline edit: enter / save / cancel
-  function startEdit() { initForm(_contact); _editing = true; }
+  function startEdit() { initForm(_contact); _editing = true; tick().then(() => _nameInputEl?.focus()); }
   function cancelEdit() { _editing = false; }
+
+  // Focus name input when add form appears
+  $: if (_view === 'add-form') { tick().then(() => _nameInputEl?.focus()); }
 
   function saveInline() {
     if (!fName.trim()) return;
@@ -332,7 +338,7 @@
           {#if avatarErr}<p class="f-err">{avatarErr}</p>{/if}
         </div>
 
-        <div class="fg"><label class="fl">{L('name')} *</label><input type="text" class="fi" bind:value={fName} /></div>
+        <div class="fg"><label class="fl">{L('name')} *</label><input type="text" class="fi" bind:value={fName} bind:this={_nameInputEl} /></div>
 
         <div class="fg"><label class="fl">{L('phone')}</label>
           {#each fPhones as p, i}
@@ -456,7 +462,7 @@
         </div>
         {#if avatarErr}<p class="f-err">{avatarErr}</p>{/if}
       </div>
-      <div class="fg"><label class="fl">{L('name')} *</label><input type="text" class="fi" bind:value={fName} /></div>
+      <div class="fg"><label class="fl">{L('name')} *</label><input type="text" class="fi" bind:value={fName} bind:this={_nameInputEl} /></div>
 
       <!-- Phones -->
       <div class="fg"><label class="fl">{L('phone')}</label>
