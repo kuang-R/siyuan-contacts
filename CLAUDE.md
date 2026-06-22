@@ -19,9 +19,17 @@ npm test             # 运行单元测试（vitest）
 ## Docker 部署
 
 ```bash
+# 传统逐文件部署
 ./scripts/deploy-docker.sh --container siyuan-note
-./scripts/dev-docker.sh --container siyuan-note   # watch 模式
+
+# 打包部署（先 npm run package 再解包，与集市提交一致）
+./scripts/deploy-docker.sh --container siyuan-note --package
+
+# watch 模式
+./scripts/dev-docker.sh --container siyuan-note
 ```
+
+`--package` 先跑 `npm run package`，将 `dist/package.zip` 解包后部署，确保部署内容与 bazaar Release 完全一致。`npm run package` 等效于 `bash scripts/package.sh`。
 
 容器内插件目录结构（`index.js` 在根目录，不在 `dist/` 子目录）：
 ```
@@ -127,9 +135,21 @@ if (!Plugin) throw new Error('...');
 }
 ```
 
+### 发布（Bazaar）
+
+1. `npm run package` → 生成 `dist/package.zip`
+2. 创建 GitHub Release，上传 `package.zip` 为附件
+3. Fork [siyuan-note/bazaar](https://github.com/siyuan-note/bazaar)，在 `plugins.txt` 加 `kuang-R/siyuan-contacts`，提 PR
+
 ### 项目结构
 
 ```
+assets/
+  wechat-qr.png          # 微信赞赏码
+  alipay-qr.jpg          # 支付宝收款码
+scripts/
+  deploy-docker.sh       # Docker 部署（支持 --package 打包部署）
+  package.sh             # 打包为 package.zip
 src/
   index.ts              # 插件入口：DOM 注入、FAB、顶部栏、面板开关、配置管理
   index.css             # 全局样式

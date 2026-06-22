@@ -125,8 +125,8 @@ MIT
 
   <table>
     <tr>
-      <td align="center"><img src="assets/wechat-qr.png" width="200" alt="WeChat Pay"><br/>WeChat Pay</td>
-      <td align="center"><img src="assets/alipay-qr.jpg" width="200" alt="Alipay"><br/>Alipay</td>
+      <td align="center"><img src="https://raw.githubusercontent.com/kuang-R/siyuan-contacts/main/assets/wechat-qr.png" width="200" alt="WeChat Pay"><br/>WeChat Pay</td>
+      <td align="center"><img src="https://raw.githubusercontent.com/kuang-R/siyuan-contacts/main/assets/alipay-qr.jpg" width="200" alt="Alipay"><br/>Alipay</td>
     </tr>
   </table>
 

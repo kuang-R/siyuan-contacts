@@ -10,6 +10,7 @@
 #   --workspace PATH      容器内工作空间路径（默认: /siyuan/workspace）
 #   --host-path PATH      宿主机挂载路径，指定后直接复制到宿主机而非用 docker cp
 #   --skip-build          跳过 npm run build，仅复制已有 dist/
+#   --package             使用 package.zip 打包部署（npm run package）
 #   --restart             安装后重启思源容器
 #   -h, --help            显示帮助
 #
@@ -33,6 +34,7 @@ CONTAINER="${SIYUAN_CONTAINER:-siyuan}"
 WORKSPACE="${SIYUAN_WORKSPACE:-/siyuan/workspace}"
 HOST_PATH="${SIYUAN_HOST_PATH:-}"
 SKIP_BUILD=false
+PACKAGE=false
 RESTART=false
 
 PLUGIN_NAME="siyuan-contacts"
@@ -53,6 +55,8 @@ while [[ $# -gt 0 ]]; do
       HOST_PATH="$2"; shift 2 ;;
     --skip-build)
       SKIP_BUILD=true; shift ;;
+    --package)
+      PACKAGE=true; shift ;;
     --restart)
       RESTART=true; shift ;;
     -h|--help)
@@ -112,42 +116,35 @@ fi
 # ============================================================================
 # 构建
 # ============================================================================
-if [ "$SKIP_BUILD" = false ]; then
-  step "构建插件..."
+if [ "$PACKAGE" = true ]; then
+  # ---- 打包部署模式 ----
+  step "打包插件 (npm run package)..."
   cd "$PROJECT_DIR"
-  npm run build
-  info "构建完成"
+  npm run package
+  info "打包完成"
+
+  # 解包到临时目录
+  PKG_TMP=$(mktemp -d)
+  unzip -q "$PROJECT_DIR/dist/package.zip" -d "$PKG_TMP"
+  SRC_DIR="$PKG_TMP"
 else
-  step "跳过构建（--skip-build）"
-fi
-
-# 验证构建产物
-if [ ! -f "$PROJECT_DIR/dist/index.js" ]; then
-  error "未找到 dist/index.js，请先运行 npm run build"
-  exit 1
-fi
-
-# ============================================================================
-# 收集待安装文件
-# ============================================================================
-step "准备安装文件..."
-
-FILES_TO_COPY=(
-  "$PROJECT_DIR/dist/index.js"
-  "$PROJECT_DIR/plugin.json"
-  "$PROJECT_DIR/icon.png"
-  "$PROJECT_DIR/preview.png"
-  "$PROJECT_DIR/i18n/zh_CN.json"
-  "$PROJECT_DIR/i18n/en_US.json"
-  "$PROJECT_DIR/README.md"
-  "$PROJECT_DIR/README_zh_CN.md"
-)
-
-for f in "${FILES_TO_COPY[@]}"; do
-  if [ ! -f "$f" ]; then
-    warn "缺少文件: $f"
+  # ---- 传统构建部署模式 ----
+  if [ "$SKIP_BUILD" = false ]; then
+    step "构建插件..."
+    cd "$PROJECT_DIR"
+    npm run build
+    info "构建完成"
+  else
+    step "跳过构建（--skip-build）"
   fi
-done
+
+  # 验证构建产物
+  if [ ! -f "$PROJECT_DIR/dist/index.js" ]; then
+    error "未找到 dist/index.js，请先运行 npm run build"
+    exit 1
+  fi
+  SRC_DIR="$PROJECT_DIR"
+fi
 
 # ============================================================================
 # 安装
@@ -158,16 +155,21 @@ if [ -n "$HOST_PATH" ]; then
 
   TARGET_DIR="$HOST_PATH/data/plugins/$PLUGIN_NAME"
   mkdir -p "$TARGET_DIR"
+  rm -rf "$TARGET_DIR/i18n" 2>/dev/null || true
   mkdir -p "$TARGET_DIR/i18n"
 
-  cp "$PROJECT_DIR/dist/index.js"     "$TARGET_DIR/index.js"
-  cp "$PROJECT_DIR/plugin.json"       "$TARGET_DIR/"
-  cp "$PROJECT_DIR/icon.png"          "$TARGET_DIR/" 2>/dev/null || true
-  cp "$PROJECT_DIR/preview.png"       "$TARGET_DIR/" 2>/dev/null || true
-  cp "$PROJECT_DIR/i18n/zh_CN.json"   "$TARGET_DIR/i18n/"
-  cp "$PROJECT_DIR/i18n/en_US.json"   "$TARGET_DIR/i18n/"
-  cp "$PROJECT_DIR/README.md"         "$TARGET_DIR/" 2>/dev/null || true
-  cp "$PROJECT_DIR/README_zh_CN.md"   "$TARGET_DIR/" 2>/dev/null || true
+  if [ "$PACKAGE" = true ]; then
+    cp -r "$SRC_DIR"/* "$TARGET_DIR/"
+  else
+    cp "$SRC_DIR/dist/index.js"     "$TARGET_DIR/index.js"
+    cp "$SRC_DIR/plugin.json"       "$TARGET_DIR/"
+    cp "$SRC_DIR/icon.png"          "$TARGET_DIR/" 2>/dev/null || true
+    cp "$SRC_DIR/preview.png"       "$TARGET_DIR/" 2>/dev/null || true
+    cp "$SRC_DIR/i18n/zh_CN.json"   "$TARGET_DIR/i18n/"
+    cp "$SRC_DIR/i18n/en_US.json"   "$TARGET_DIR/i18n/"
+    cp "$SRC_DIR/README.md"         "$TARGET_DIR/" 2>/dev/null || true
+    cp "$SRC_DIR/README_zh_CN.md"   "$TARGET_DIR/" 2>/dev/null || true
+  fi
 
   info "文件已复制到: $TARGET_DIR"
 
@@ -178,15 +180,28 @@ else
   # 创建目标目录结构
   docker exec "$CONTAINER" mkdir -p "$PLUGIN_DIR/i18n" 2>/dev/null || true
 
-  # 逐个复制文件（注意 index.js 在根目录，不在 dist/ 子目录）
-  docker cp "$PROJECT_DIR/dist/index.js"     "$CONTAINER:$PLUGIN_DIR/index.js"
-  docker cp "$PROJECT_DIR/plugin.json"       "$CONTAINER:$PLUGIN_DIR/"
-  docker cp "$PROJECT_DIR/icon.png"          "$CONTAINER:$PLUGIN_DIR/"         2>/dev/null || true
-  docker cp "$PROJECT_DIR/preview.png"       "$CONTAINER:$PLUGIN_DIR/"         2>/dev/null || true
-  docker cp "$PROJECT_DIR/i18n/zh_CN.json"   "$CONTAINER:$PLUGIN_DIR/i18n/"
-  docker cp "$PROJECT_DIR/i18n/en_US.json"   "$CONTAINER:$PLUGIN_DIR/i18n/"
-  docker cp "$PROJECT_DIR/README.md"         "$CONTAINER:$PLUGIN_DIR/"         2>/dev/null || true
-  docker cp "$PROJECT_DIR/README_zh_CN.md"   "$CONTAINER:$PLUGIN_DIR/"         2>/dev/null || true
+  if [ "$PACKAGE" = true ]; then
+    for f in "$SRC_DIR"/*; do
+      fname=$(basename "$f")
+      if [ "$fname" = "i18n" ]; then
+        docker cp "$f/." "$CONTAINER:$PLUGIN_DIR/i18n/"
+      else
+        docker cp "$f" "$CONTAINER:$PLUGIN_DIR/$fname"
+      fi
+    done
+  else
+    docker cp "$SRC_DIR/dist/index.js"     "$CONTAINER:$PLUGIN_DIR/index.js"
+    docker cp "$SRC_DIR/plugin.json"       "$CONTAINER:$PLUGIN_DIR/"
+    docker cp "$SRC_DIR/icon.png"          "$CONTAINER:$PLUGIN_DIR/"         2>/dev/null || true
+    docker cp "$SRC_DIR/preview.png"       "$CONTAINER:$PLUGIN_DIR/"         2>/dev/null || true
+    docker cp "$SRC_DIR/i18n/zh_CN.json"   "$CONTAINER:$PLUGIN_DIR/i18n/"
+    docker cp "$SRC_DIR/i18n/en_US.json"   "$CONTAINER:$PLUGIN_DIR/i18n/"
+    docker cp "$SRC_DIR/README.md"         "$CONTAINER:$PLUGIN_DIR/"         2>/dev/null || true
+    docker cp "$SRC_DIR/README_zh_CN.md"   "$CONTAINER:$PLUGIN_DIR/"         2>/dev/null || true
+  fi
+
+  # 清理临时目录
+  [ "$PACKAGE" = true ] && rm -rf "$PKG_TMP"
 
   info "文件已复制到容器: $PLUGIN_DIR"
 fi

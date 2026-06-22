@@ -107,8 +107,8 @@ MIT
 
   <table>
     <tr>
-      <td align="center"><img src="assets/wechat-qr.png" width="200" alt="微信收款码"><br/>微信</td>
-      <td align="center"><img src="assets/alipay-qr.jpg" width="200" alt="支付宝收款码"><br/>支付宝</td>
+      <td align="center"><img src="https://raw.githubusercontent.com/kuang-R/siyuan-contacts/main/assets/wechat-qr.png" width="200" alt="微信收款码"><br/>微信</td>
+      <td align="center"><img src="https://raw.githubusercontent.com/kuang-R/siyuan-contacts/main/assets/alipay-qr.jpg" width="200" alt="支付宝收款码"><br/>支付宝</td>
     </tr>
   </table>
 
