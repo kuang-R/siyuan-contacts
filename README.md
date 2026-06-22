@@ -1,5 +1,7 @@
 # siyuan-contacts
 
+[中文说明](README_zh_CN.md)
+
 A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plugin.
 
 > Maintained by [@kuang-R](https://github.com/kuang-R)
