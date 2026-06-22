@@ -16,6 +16,9 @@ npm run build        # 生产构建 → dist/index.js
 npm test             # 运行单元测试（vitest）
 ```
 
+- `package.json` 仅用于本地开发工具链（Vite/Svelte/vitest），思源运行时不用它。**插件版本以 `plugin.json` 为准**，`package.json` 的 `version` 仅作参考
+- `package-lock.json` **不追踪**（`.gitignore`），因为依赖全是 devDependencies，跨平台 lockfile 频繁产生无意义 diff
+
 ## Docker 部署
 
 ```bash
