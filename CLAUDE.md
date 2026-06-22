@@ -183,6 +183,7 @@ tests/                  # IAL 解析、工具函数测试
 - **孤儿块过滤**：`loadAllContacts()` 用 `listDocsByPath` 获取实际存在的文档 ID 集合，与 SQL 查出的联系人交叉比对，过滤已删除的孤儿块
 - **自动刷新**：每次 `openPanel()` 调 `loadAllContacts()`，确保手动删除后打开面板即时反映
 - **只读保护恢复**：`ensureContactsReadonly()` 每次启动用一次 SQL（`WHERE ial NOT LIKE '%custom-sy-readonly%'`）找出缺失只读标记的联系人并补上，防止手动删除/恢复后属性丢失
+- **反链修复**：`ensureContactsReadonly()` 恢复只读属性后，对每个恢复的联系人调用 `repairBacklinks()`：搜索其他文档中仍包含该联系人块引用的 markdown（`LIKE '%((blockId%'`），对这些源文档根块设 `custom-contact-repair-ts` 属性触发思源重新索引，从而重建 `refs` 表。限制单次最多修复 50 个文档，避免过载
 - **反链实现**：用 SQL 查询 `refs` 表（`def_block_root_id = 联系人块ID`）获取引用文档和引用块 ID。不要用 `/api/ref/getBackmentionDoc`（该 API 在 Docker/桌面模式下存在但返回空）
 - **`openTab` 导航**：`openTab` 在 `require('siyuan')` 返回的模块上（与 `Plugin` 同级），不在 Plugin 实例上。用法：`_siyuanModule.openTab({ doc: { id: blockId } })`。注意：**先 `this.closePanel()` 再跳转**，否则面板遮住文档看不到效果
 - **滚动到引用块**：`openTab` 传文档根块 ID 打开完整文档，但不会自动滚动到引用位置。需用 `document.querySelector('[data-node-id="块ID"]')` + `scrollIntoView()` 手动滚动，并用多次 `setTimeout`（300/800/1500ms）等待 Protyle 异步渲染。查询需限定在 `.layout__wnd--active` 内，避免匹配到反链面板等背景区域的同 ID 块。传 `blockId` 前需判空，避免无意义 scroll

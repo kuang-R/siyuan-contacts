@@ -7,7 +7,7 @@
 
 import { Client } from '@siyuan-community/siyuan-sdk';
 import type { AttrRecord } from '../models/attributeKeys';
-import { buildBacklinksQuery } from './sql';
+import { buildBacklinksQuery, buildFindReferencingBlocksQuery } from './sql';
 
 export interface NotebookInfo {
   id: string;
@@ -337,6 +337,61 @@ export class ContactsApi {
       return map;
     } catch {
       return {};
+    }
+  }
+
+  /**
+   * Repair backlinks for a restored contact document.
+   *
+   * When a contact document is deleted and restored, SiYuan clears the `refs`
+   * table entries and does not rebuild them on restore. This method finds
+   * source documents that still contain block references to the contact
+   * (in their markdown) and touches them to trigger re-indexing, which
+   * rebuilds the `refs` entries.
+   *
+   * @param contactBlockId - The contact document's root block ID
+   * @param contactsNotebookId - The contacts notebook box ID (excluded from search)
+   * @returns Number of source documents repaired
+   */
+  async repairBacklinks(contactBlockId: string, contactsNotebookId: string): Promise<number> {
+    try {
+      // Find source documents that reference this contact block
+      const query = buildFindReferencingBlocksQuery(contactBlockId, contactsNotebookId);
+      const refRows = await this.sqlQuery(query);
+
+      if (!refRows.length) return 0;
+
+      // Deduplicate by root_id
+      const seen = new Set<string>();
+      const docRoots: string[] = [];
+      for (const row of refRows) {
+        const rid = row.root_id;
+        if (rid && !seen.has(rid)) {
+          seen.add(rid);
+          docRoots.push(rid);
+        }
+      }
+
+      // Limit to avoid overwhelming the database
+      const MAX_REPAIR = 50;
+      const toRepair = docRoots.slice(0, MAX_REPAIR);
+
+      let repaired = 0;
+      for (const rootId of toRepair) {
+        try {
+          // Touch the document root block to trigger re-indexing.
+          // Setting a transient attribute forces SiYuan to save & re-parse
+          // the document, which rebuilds refs entries for block references.
+          await this.setBlockAttrs(rootId, { 'custom-contact-repair-ts': String(Date.now()) });
+          repaired++;
+        } catch {
+          // Individual document touch failures are non-fatal
+        }
+      }
+
+      return repaired;
+    } catch {
+      return 0;
     }
   }
 

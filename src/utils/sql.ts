@@ -97,6 +97,21 @@ export function buildBacklinksQuery(defBlockId: string): string {
 }
 
 /**
+ * Build a SQL query to find blocks (in other notebooks) whose markdown
+ * contains a block reference to the given block ID.
+ * Used to locate source documents that should be re-indexed after a
+ * contact document is restored from history/undo.
+ */
+export function buildFindReferencingBlocksQuery(blockId: string, excludeBox: string): string {
+  return `
+    SELECT DISTINCT root_id, box
+    FROM blocks
+    WHERE markdown LIKE '%((${escapeSql(blockId)}%'
+      AND box != '${escapeSql(excludeBox)}'
+  `;
+}
+
+/**
  * Escape a string value for safe use in SQL.
  * Simple escaping: double up single quotes.
  */

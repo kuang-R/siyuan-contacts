@@ -250,6 +250,19 @@ export default class ContactsPlugin extends Plugin {
       for (const row of rows) {
         await this.api.setBlockAttrs(row.id, { 'custom-sy-readonly': 'true' });
       }
+
+      // For each restored contact, repair backlinks (refs table entries are
+      // cleared on document delete and NOT rebuilt by SiYuan on restore)
+      if (rows.length > 0) {
+        for (const row of rows) {
+          try {
+            const repaired = await this.api.repairBacklinks(row.id, this.notebookId);
+            if (repaired > 0) {
+              console.log(`[siyuan-contacts] Repaired ${repaired} backlink(s) for restored contact ${row.id}`);
+            }
+          } catch { /* best-effort per contact */ }
+        }
+      }
     } catch { /* best-effort */ }
   }
 
