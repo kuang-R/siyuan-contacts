@@ -2,10 +2,12 @@
 
 A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plugin.
 
+> Maintained by [@kuang-R](https://github.com/kuang-R)
+
 ## Features
 
-- **Slide-out Panel** — Click the floating button (bottom-right) or the top bar icon to open the contacts panel; auto-refreshes on every open
-- **Toggleable FAB** — Show or hide the floating button from the panel toolbar (● visible / ○ hidden), with toast confirmation
+- **Slide-out Panel** — Click the top bar icon to open the contacts panel; auto-refreshes on every open. An optional floating button can be enabled in the panel toolbar
+- **Optional FAB** — Floating button disabled by default; enable it from the panel toolbar (● visible / ○ hidden), with toast confirmation
 - **Rich Contact Fields** — Name, multiple phone numbers, multiple emails, birthday, address, organization, groups, avatar (with image preview), website, WeChat, QQ, and notes
 - **Avatar Support** — Upload profile images (≤128KB), displayed in list and detail views
 - **Multi-Value Fields** — Add/remove phone numbers and email addresses individually with +/− buttons
@@ -13,6 +15,9 @@ A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plug
 - **Sort Options** — Sort by name (A-Z / Z-A), recently added, or recently updated
 - **Slash Command Linking** — Type `/name` in any document to insert a link to a contact; clicking opens the panel instead of navigating
 - **Slash Command** — Type `/add-contact` to quickly add a new contact
+- **Inline Edit** — Edit contact fields directly in the detail view without switching to a separate form
+- **Backlink View** — See which documents reference a contact in the detail view, with customizable backlink titles
+- **Auto-Focus** — Name input automatically gains focus when adding or editing a contact
 - **Click to Copy** — Click a phone number to copy it to clipboard (with visual toast)
 - **Read-Only Documents** — Contact documents are protected from direct editing in the file tree
 - **Contact as Document** — Each contact is a native SiYuan document, enabling all built-in features (linking, referencing, search, data history)
@@ -34,9 +39,8 @@ Search for "siyuan-contacts" in the SiYuan marketplace.
 
 ### Opening the Panel
 
-- Click the **blue floating button** (bottom-right corner) to slide out the contacts panel
-- Or click the **contacts icon** in the top bar (right side of the SiYuan toolbar)
-- The FAB can be toggled on/off from the panel toolbar (● icon next to the + button)
+- Click the **contacts icon** in the top bar (right side of the SiYuan toolbar)
+- Optionally enable the **floating button** from the panel toolbar (● icon next to the + button)
 - Click the backdrop or press Escape to close
 
 ### Adding a Contact
@@ -112,3 +116,18 @@ The UI is built as a single Svelte component rendered into a DOM-injected slide-
 ## License
 
 MIT
+
+---
+
+<div align="center">
+
+  <sub>❤️ If this plugin helps you, consider buying me some tokens ☕</sub>
+
+  <table>
+    <tr>
+      <td align="center"><img src="assets/wechat-qr.png" width="200" alt="WeChat Pay"><br/>WeChat Pay</td>
+      <td align="center"><img src="assets/alipay-qr.jpg" width="200" alt="Alipay"><br/>Alipay</td>
+    </tr>
+  </table>
+
+</div>
