@@ -23,6 +23,7 @@ cp icon.png "$PKG_DIR/"
 cp preview.png "$PKG_DIR/"
 cp README.md "$PKG_DIR/"
 cp README_zh_CN.md "$PKG_DIR/"
+cp LICENSE "$PKG_DIR/"
 
 # i18n
 cp -r i18n "$PKG_DIR/"

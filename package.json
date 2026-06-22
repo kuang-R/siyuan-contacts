@@ -30,5 +30,6 @@
     "address-book",
     "通讯录"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "author": "kuang-R"
 }
