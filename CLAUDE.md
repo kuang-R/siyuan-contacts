@@ -171,7 +171,7 @@ tests/                  # IAL 解析、工具函数测试
 - **IAL 解析正则注意**：`parseIAL` 的 key 匹配必须用 `[^\s=]+`，不能用 `\S+`。`\S+` 会贪婪吞入 base64 data URI 末尾的 `=="`，回溯时把 `="` 误认为 key=value 分隔符，导致后续属性全部解析错位（头像丢失等）。同样影响所有包含 `=` 的属性值（如 URL query string `?a=1`、base64 padding）
 - **名字中的特殊字符**：`-`（连字符）在 IAL 解析、文件路径、SQL 查询、客户端搜索中均安全（有测试覆盖）。但 `escapeMarkdown()` 目前只转义 `\`、`#`、`|`，名字中包含 `*`、`_`、`` ` ``、`<`、`>`、`[`、`]` 可能导致文档标题渲染异常（非 XSS，思源内核会过滤 HTML）
 - 电话/邮箱存储为逗号分隔字符串，表单用数组+增删按钮
-- 头像 base64 data URI，限制 64KB
+- 头像 base64 data URI，`MAX_AVATAR_SIZE` 限制 128KB（文件原始大小，base64 编码后实际存储约 +33%）。`processAvatarFile(f: File)` 为统一入口（拖放和点击共用），校验大小后通过 FileReader 转 data URI。`_dragOver` 状态驱动拖放视觉反馈（⬇ 图标、蓝色高亮、缩放动画）。拖入时校验 `image/*` MIME 类型
 - 搜索为客户端过滤，不每次请求服务端
 - 语言检测：`window.siyuan.config.lang`，默认 `zh_CN`
 - i18n 统一用 `L('key')`：`i18n.ts` 导出 `export const L = t` 别名，非 Svelte 文件直接 `import { L }`；Svelte 组件内定义局部 `function L(key) { return t(key); }`（避免 Rollup IIFE 改名）

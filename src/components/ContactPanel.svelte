@@ -222,9 +222,10 @@
     setTimeout(() => fabToast = '', 2000);
   }
 
-  function onAvatarFile(e: Event) {
-    const f = (e.target as HTMLInputElement).files?.[0];
-    if (!f) return;
+  // Avatar drag state
+  let _dragOver = false;
+
+  function processAvatarFile(f: File) {
     avatarErr = '';
     if (f.size > MAX_AVATAR_SIZE) {
       avatarErr = L('avatarTooLarge').replace('{size}', String(Math.round(MAX_AVATAR_SIZE / 1024)) + 'KB');
@@ -233,6 +234,34 @@
     const r = new FileReader();
     r.onload = () => { avatarPrev = r.result as string; fAvatar = r.result as string; };
     r.readAsDataURL(f);
+  }
+
+  function onAvatarFile(e: Event) {
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f) return;
+    processAvatarFile(f);
+  }
+
+  function onAvatarDragOver(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    _dragOver = true;
+  }
+
+  function onAvatarDragLeave(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    _dragOver = false;
+  }
+
+  function onAvatarDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    _dragOver = false;
+    const f = e.dataTransfer?.files?.[0];
+    if (!f || !f.type.startsWith('image/')) return;
+    processAvatarFile(f);
   }
 </script>
 
@@ -329,8 +358,9 @@
         <!-- === INLINE EDIT MODE === -->
         <div class="d-av-row">
           <div class="av-up">
-            <label class="av-lab" class:has-img={!!avatarPrev}>
-              {#if avatarPrev}<img src={avatarPrev} alt="" />{:else}+{/if}
+            <label class="av-lab" class:has-img={!!avatarPrev} class:drag-over={_dragOver}
+              on:dragover={onAvatarDragOver} on:dragleave={onAvatarDragLeave} on:drop={onAvatarDrop}>
+              {#if avatarPrev}<img src={avatarPrev} alt="" />{:else}{_dragOver ? '⬇' : '+'}{/if}
               <input type="file" accept="image/*" on:change={onAvatarFile} class="f-hidden" />
             </label>
             {#if avatarPrev}<button class="av-rm" on:click={()=>{avatarPrev='';fAvatar='';}}>x</button>{/if}
@@ -454,8 +484,9 @@
     <div class="f-body">
       <div class="fg"><label class="fl">{L('avatar')}</label>
         <div class="av-up">
-          <label class="av-lab" class:has-img={!!avatarPrev}>
-            {#if avatarPrev}<img src={avatarPrev} alt="" />{:else}+{/if}
+          <label class="av-lab" class:has-img={!!avatarPrev} class:drag-over={_dragOver}
+            on:dragover={onAvatarDragOver} on:dragleave={onAvatarDragLeave} on:drop={onAvatarDrop}>
+            {#if avatarPrev}<img src={avatarPrev} alt="" />{:else}{_dragOver ? '⬇' : '+'}{/if}
             <input type="file" accept="image/*" on:change={onAvatarFile} class="f-hidden" />
           </label>
           {#if avatarPrev}<button class="av-rm" on:click={()=>{avatarPrev='';fAvatar='';}}>x</button>{/if}
@@ -571,6 +602,7 @@
   .av-up{display:flex;align-items:center;gap:8px;}
   .av-lab{display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;border:2px dashed #ddd;cursor:pointer;font-size:20px;color:#ccc;overflow:hidden;}
   .av-lab.has-img{border-style:solid;border-color:#3575f0;}
+  .av-lab.drag-over{border-color:#3575f0;background:#e8f0fe;transform:scale(1.08);transition:transform .15s,border-color .15s,background .15s;}
   .av-lab img{width:100%;height:100%;object-fit:cover;}
   .av-rm{width:20px;height:20px;border:none;border-radius:50%;background:#e74c3c;color:#fff;cursor:pointer;font-size:10px;}
   .f-hidden{display:none;}
