@@ -194,3 +194,5 @@ tests/                  # IAL 解析、工具函数测试
 - **反链标题内联编辑**：每个反链条目悬停显示 ✏️ 按钮，点击后标题变输入框（`tick().then(focus)` 自动聚焦），Enter/失焦保存。标题按 `blockID`（非文档 ID）作为 localStorage key 独立存储，**不修改源文档**。列表加载时从 `siyuan-contacts-bl-titles` 恢复自定义标题
 - **反链 snippet**：用 `resolveBlockContent()` 查引用块在 `blocks` 表中的完整文本内容，而非 `refs` 表中仅存的人名。`refs.content` 作为回退
 - **面板重开刷新反链**：`openPanel()` 设 `panelOpenAt: Date.now()` → Svelte `$:` 检测变化触发 `loadBacklinks` 重新查询数据库
+
+- **标签排列**：`allGroups` derived store 按标签关联联系人数降序排列（人数相同按 `localeCompare('zh-CN')` 字母序）。用 `Map<string, number>` 计数，不再用 Set

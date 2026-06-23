@@ -43,15 +43,19 @@ export const selectedGroup = writable<string>('');
 // Derived Stores
 // ==========================================================================
 
-/** All unique group tags across all contacts, sorted alphabetically */
+/** All unique group tags across all contacts, sorted by contact count (descending), then alphabetically */
 export const allGroups = derived(contacts, ($contacts) => {
-  const groupSet = new Set<string>();
+  const groupMap = new Map<string, number>();
   for (const c of $contacts) {
     for (const g of c.groups) {
-      groupSet.add(g);
+      groupMap.set(g, (groupMap.get(g) || 0) + 1);
     }
   }
-  return Array.from(groupSet).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+  return Array.from(groupMap.keys()).sort((a, b) => {
+    const diff = (groupMap.get(b) || 0) - (groupMap.get(a) || 0);
+    if (diff !== 0) return diff;
+    return a.localeCompare(b, 'zh-CN');
+  });
 });
 
 /** Filtered and sorted contact list — reacts to searchText, selectedGroup, sortMode, contacts */
