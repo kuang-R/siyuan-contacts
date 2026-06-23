@@ -72,6 +72,39 @@ describe('parseIAL', () => {
     );
     expect(result['custom-contact-notes']).toBe('a=b=c');
   });
+
+  it('应正确解析名字包含连字符（如"幽州-节度使"）', () => {
+    const result = parseIAL(
+      '{: custom-contact-name="幽州-节度使" custom-contact-created="2025-06-23T10:30:00.000Z" custom-contact-updated="2025-06-23T10:30:00.000Z" custom-sy-readonly="true" updated="20250623103000"}'
+    );
+    expect(result['custom-contact-name']).toBe('幽州-节度使');
+    expect(result['custom-contact-created']).toBe('2025-06-23T10:30:00.000Z');
+    expect(result['custom-sy-readonly']).toBe('true');
+    expect(result['updated']).toBe('20250623103000');
+  });
+
+  it('应正确解析英文名含连字符（如 Jean-Claude）', () => {
+    const result = parseIAL(
+      '{: custom-contact-name="Jean-Claude Van-Damme"}'
+    );
+    expect(result['custom-contact-name']).toBe('Jean-Claude Van-Damme');
+  });
+
+  it('应正确解析无引号名字含连字符', () => {
+    const result = parseIAL(
+      '{: custom-contact-name=幽州-节度使 custom-sy-readonly=true}'
+    );
+    expect(result['custom-contact-name']).toBe('幽州-节度使');
+    expect(result['custom-sy-readonly']).toBe('true');
+  });
+
+  it('值包含字面反斜杠应保留（非标准转义序列）', () => {
+    const result = parseIAL(
+      '{: custom-contact-name="test\\-name"}'
+    );
+    // \- is not a standard escape, the backslash stays literal
+    expect(result['custom-contact-name']).toBe('test\\-name');
+  });
 });
 
 // =============================================================================

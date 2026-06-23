@@ -161,6 +161,7 @@ export class ContactsApi {
     const res = await this.client.listDocsByPath({
       notebook: notebookId,
       path,
+      maxListCount: 0,  // 0 = unlimited, avoids silent truncation and filtering
     });
     const data = res?.data as any;
     return (data?.files ?? []) as DocInfo[];

@@ -168,6 +168,7 @@ tests/                  # IAL 解析、工具函数测试
 ### 关键约定
 
 - 块属性前缀 `custom-contact-`
+- **名字中的特殊字符**：`-`（连字符）在 IAL 解析、文件路径、SQL 查询、客户端搜索中均安全（有测试覆盖）。但 `escapeMarkdown()` 目前只转义 `\`、`#`、`|`，名字中包含 `*`、`_`、`` ` ``、`<`、`>`、`[`、`]` 可能导致文档标题渲染异常（非 XSS，思源内核会过滤 HTML）
 - 电话/邮箱存储为逗号分隔字符串，表单用数组+增删按钮
 - 头像 base64 data URI，限制 64KB
 - 搜索为客户端过滤，不每次请求服务端
@@ -180,7 +181,7 @@ tests/                  # IAL 解析、工具函数测试
 - 联系人链接点击拦截用**捕获阶段 + `stopImmediatePropagation`**，不要尝试 `open-siyuan-url-plugin`（Protyle 不渲染该协议链接）或 `open-siyuan-url-block`（通知事件，不能取消）
 - **`/add-contact` 斜杠命令**：回调需先调 `openPanel()` 再 `openAddForm()`。用 `protyle.insert('​')`（零宽空格）通知 Protyle 替换斜杠文本，否则原文残留
 - **删除联系人**：面板只提示用户手动在文档树中删除，不调 API。因为 `removeDoc` 与文件树 UI 行为不一致（内核异步清理，块可能残留）
-- **孤儿块过滤**：`loadAllContacts()` 用 `listDocsByPath` 获取实际存在的文档 ID 集合，与 SQL 查出的联系人交叉比对，过滤已删除的孤儿块
+- **孤儿块过滤**：`loadAllContacts()` 用 `listDocsByPath` 获取实际存在的文档 ID 集合，与 SQL 查出的联系人交叉比对，过滤已删除的孤儿块。**必须传 `maxListCount: 0`**（0 = unlimited），否则 SiYuan 默认上限（如 256）会导致超限联系人被静默丢弃
 - **自动刷新**：每次 `openPanel()` 调 `loadAllContacts()`，确保手动删除后打开面板即时反映
 - **只读保护恢复**：`ensureContactsReadonly()` 每次启动用一次 SQL（`WHERE ial NOT LIKE '%custom-sy-readonly%'`）找出缺失只读标记的联系人并补上，防止手动删除/恢复后属性丢失
 - **反链修复**：`ensureContactsReadonly()` 恢复只读属性后，对每个恢复的联系人调用 `repairBacklinks()`：搜索其他文档中仍包含该联系人块引用的 markdown（`LIKE '%((blockId%'`），对这些源文档根块设 `custom-contact-repair-ts` 属性触发思源重新索引，从而重建 `refs` 表。限制单次最多修复 50 个文档，避免过载

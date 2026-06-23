@@ -189,6 +189,14 @@ describe('getContactPath', () => {
   it('应 trim 前后空格', () => {
     expect(getContactPath('  张三  ')).toBe('/张三');
   });
+
+  it('连字符名（如幽州-节度使）应保留连字符', () => {
+    expect(getContactPath('幽州-节度使')).toBe('/幽州-节度使');
+  });
+
+  it('英文连字符名应保留连字符', () => {
+    expect(getContactPath('Jean-Claude')).toBe('/Jean-Claude');
+  });
 });
 
 // =============================================================================
