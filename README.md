@@ -11,7 +11,7 @@ A [SiYuan Note](https://github.com/siyuan-note/siyuan) contact/address book plug
 - **Slide-out Panel** — Click the top bar icon to open the contacts panel; auto-refreshes on every open. An optional floating button can be enabled in the panel toolbar
 - **Optional FAB** — Floating button disabled by default; enable it from the panel toolbar (● visible / ○ hidden), with toast confirmation
 - **Rich Contact Fields** — Name, multiple phone numbers, multiple emails, birthday, address, organization, groups, avatar (with image preview), website, WeChat, QQ, and notes
-- **Avatar Support** — Upload profile images (≤128KB), displayed in list and detail views
+- **Avatar Support** — Upload profile images (≤128KB) via click or drag-and-drop, displayed in list and detail views
 - **Multi-Value Fields** — Add/remove phone numbers and email addresses individually with +/− buttons
 - **Group Tags** — Organize contacts with custom tags and filter by them
 - **Sort Options** — Sort by name (A-Z / Z-A), recently added, or recently updated

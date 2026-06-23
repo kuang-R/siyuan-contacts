@@ -1,6 +1,6 @@
 {
   "name": "siyuan-contacts",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "Contacts/Address Book plugin for SiYuan Note — 思源笔记通讯录插件",
   "type": "module",
   "main": "dist/index.js",
