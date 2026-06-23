@@ -105,6 +105,17 @@ describe('parseIAL', () => {
     // \- is not a standard escape, the backslash stays literal
     expect(result['custom-contact-name']).toBe('test\\-name');
   });
+
+  it('应正确解析 base64 头像 data URI（含 == 和 +）', () => {
+    const b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const dataUri = 'data:image/png;base64,' + b64;
+    const ial = '{: custom-contact-name="幽州-节度使" custom-contact-avatar="' + dataUri + '" custom-sy-readonly="true" updated="20250623103000"}';
+    const result = parseIAL(ial);
+    expect(result['custom-contact-name']).toBe('幽州-节度使');
+    expect(result['custom-contact-avatar']).toBe(dataUri);
+    expect(result['custom-sy-readonly']).toBe('true');
+    expect(result['updated']).toBe('20250623103000');
+  });
 });
 
 // =============================================================================

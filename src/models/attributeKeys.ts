@@ -45,8 +45,10 @@ export function parseIAL(ial: string): AttrRecord {
 
   if (!inner) return result;
 
-  // Match key="value" pairs (values with double quotes, handle escaped quotes)
-  const quotedRegex = /(\S+)\s*=\s*"((?:[^"\\]|\\.)*)"/g;
+  // Match key="value" pairs (values with double quotes, handle escaped quotes).
+  // Key must not contain '=' — otherwise base64 padding (e.g. "...==") would
+  // be misinterpreted as the "key=value" separator during greedy backtracking.
+  const quotedRegex = /([^\s=]+)\s*=\s*"((?:[^"\\]|\\.)*)"/g;
   let match: RegExpExecArray | null;
   while ((match = quotedRegex.exec(inner)) !== null) {
     const key = match[1];
@@ -59,8 +61,10 @@ export function parseIAL(ial: string): AttrRecord {
   // Remove already-matched quoted pairs before matching unquoted
   const remaining = inner.replace(quotedRegex, '').trim();
 
-  // Match key=value pairs (unquoted values)
-  const unquotedRegex = /(\S+)\s*=\s*(\S+)/g;
+  // Match key=value pairs (unquoted values).
+  // Key must not contain '=' — same reason as quotedRegex (avoids mis-parsing
+  // values that contain '=' such as base64 padding or URLs with query strings).
+  const unquotedRegex = /([^\s=]+)\s*=\s*(\S+)/g;
   while ((match = unquotedRegex.exec(remaining)) !== null) {
     const key = match[1];
     const value = match[2];
